@@ -5,14 +5,14 @@ export function ThemeToggle() {
   const { theme, setTheme } = useApp();
 
   return (
-    <div className="retro-button inline-flex items-center gap-1 rounded-full bg-[#fff9ef] p-1 text-[#181457] dark:bg-[#fff9ef]">
+    <div className="retro-button inline-flex items-center gap-1 rounded-full bg-[#ffffff] p-1 text-[#1a1a1a] dark:bg-[#ffffff]">
       <button
         type="button"
         onClick={() => setTheme("light")}
         className={`rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition ${
           theme === "light"
-            ? "bg-[#ffef9c] text-[#21185b]"
-            : "text-[#6e6597] hover:bg-white/70"
+            ? "bg-[#e5e5e5] text-[#1a1a1a]"
+            : "text-[#666666] hover:bg-white/70"
         }`}
       >
         <span className="inline-flex items-center gap-1.5">
@@ -25,8 +25,8 @@ export function ThemeToggle() {
         onClick={() => setTheme("dark")}
         className={`rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition ${
           theme === "dark"
-            ? "bg-[#181457] text-[#fff9ef]"
-            : "text-[#6e6597] hover:bg-white/70"
+            ? "bg-[#1a1a1a] text-[#ffffff]"
+            : "text-[#666666] hover:bg-white/70"
         }`}
       >
         <span className="inline-flex items-center gap-1.5">

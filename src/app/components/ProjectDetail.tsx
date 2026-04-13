@@ -95,13 +95,13 @@ export function ProjectDetail() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b-4 border-[#21185b] bg-[linear-gradient(90deg,_rgba(244,185,66,0.92),_rgba(111,243,213,0.9),_rgba(43,139,242,0.88))] backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b-4 border-[#1a1a1a] bg-[#1a1a1a] backdrop-blur-xl">
         <div className="mx-auto max-w-6xl px-5 py-5 sm:px-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-start gap-4">
               <button
                 onClick={() => navigate("/")}
-                className="retro-button rounded-full bg-[#fff9ef] p-3 text-[#181457] shadow-sm transition hover:bg-[#fff6d5]"
+                className="retro-button rounded-full bg-[#ffffff] p-3 text-[#1a1a1a] shadow-sm transition hover:bg-[#f5f5f5]"
               >
                 <ArrowLeft size={18} />
               </button>
@@ -127,25 +127,25 @@ export function ProjectDetail() {
                             setIsEditingTitle(false);
                           }
                         }}
-                        className="retro-input w-full rounded-md bg-white px-3 py-2 text-3xl font-black uppercase text-[#181457] outline-none"
+                        className="retro-input w-full rounded-md bg-white px-3 py-2 text-3xl font-black uppercase text-[#1a1a1a] outline-none"
                         autoFocus
                       />
                     ) : (
                       <div className="flex items-center gap-2">
-                        <h1 className="text-3xl font-black uppercase tracking-[0.04em] text-[#181457]">{project.title}</h1>
+                        <h1 className="text-3xl font-black uppercase tracking-[0.04em] text-white">{project.title}</h1>
                         <button
                           type="button"
                           onClick={() => {
                             setEditedTitle(project.title);
                             setIsEditingTitle(true);
                           }}
-                          className="rounded-md p-2 text-[#4a4177] transition-colors hover:bg-white/70 hover:text-[#181457]"
+                          className="rounded-md p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                         >
                           <Pencil size={16} />
                         </button>
                       </div>
                     )}
-                    <p className="mt-1 text-sm text-[#312f67]">
+                    <p className="mt-1 text-sm text-white/70">
                       Created {formatShortDate(project.createdAt)}. {completedTasks.length} completed
                       and {incompleteTasks.length} active.
                     </p>
@@ -153,7 +153,7 @@ export function ProjectDetail() {
                 </div>
 
                 <div className="mt-4 max-w-xl">
-                  <div className="h-3 overflow-hidden rounded-full border-2 border-[#21185b] bg-white">
+                  <div className="h-3 overflow-hidden rounded-full border-2 border-[#1a1a1a] bg-white">
                     <div
                       className="h-full rounded-full transition-[width] duration-700 ease-out"
                       style={{ width: `${progress}%`, backgroundColor: project.color }}
@@ -167,7 +167,7 @@ export function ProjectDetail() {
               <button
                 type="button"
                 onClick={handleAddTask}
-                className="retro-button inline-flex items-center gap-2 bg-[#ffef9c] px-4 py-2.5 text-sm font-bold uppercase tracking-[0.08em] text-[#21185b] shadow-md"
+                className="retro-button inline-flex items-center gap-2 bg-white px-4 py-2.5 text-sm font-bold uppercase tracking-[0.08em] text-[#1a1a1a] shadow-md"
               >
                 <Plus size={18} />
                 <span>Add task</span>
@@ -178,7 +178,7 @@ export function ProjectDetail() {
                   deleteProject(project.id);
                   navigate("/");
                 }}
-                className="retro-button inline-flex items-center gap-2 bg-[#ffd9e5] px-4 py-2.5 text-sm font-bold uppercase tracking-[0.08em] text-[#b12958] transition"
+                className="retro-button inline-flex items-center gap-2 bg-white/20 px-4 py-2.5 text-sm font-bold uppercase tracking-[0.08em] text-white transition"
               >
                 <Trash2 size={16} />
                 <span>Delete project</span>
@@ -192,17 +192,17 @@ export function ProjectDetail() {
         <section className="space-y-6">
           <div className="retro-panel rounded-[28px] p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-[0.04em] text-[#181457]">
+              <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-[0.04em] text-[#1a1a1a]">
                 <Circle size={18} style={{ color: project.color }} />
                 <span>Active tasks</span>
-                <span className="rounded-full border-2 border-[#21185b] bg-white px-2.5 py-1 text-xs font-bold uppercase text-[#6e6597]">
+                <span className="rounded-full border-2 border-[#1a1a1a] bg-white px-2.5 py-1 text-xs font-bold uppercase text-[#666666]">
                   {incompleteTasks.length}
                 </span>
               </h2>
               <button
                 type="button"
                 onClick={handleAddTask}
-                className="retro-button rounded-full bg-white px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] text-[#181457]"
+                className="retro-button rounded-full bg-white px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] text-[#1a1a1a]"
               >
                 Add another
               </button>
@@ -222,7 +222,7 @@ export function ProjectDetail() {
                   />
                 ))
               ) : (
-                <div className="rounded-[18px] border-2 border-dashed border-[#21185b] bg-white/70 px-4 py-10 text-center text-sm text-[#6e6597]">
+                <div className="rounded-[18px] border-2 border-dashed border-[#1a1a1a] bg-white/70 px-4 py-10 text-center text-sm text-[#666666]">
                   No active tasks left in this project.
                 </div>
               )}
@@ -235,14 +235,14 @@ export function ProjectDetail() {
               onClick={() => setShowCompleted((current) => !current)}
               className="flex w-full items-center justify-between gap-3 text-left"
             >
-              <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-[0.04em] text-[#181457]">
+              <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-[0.04em] text-[#1a1a1a]">
                 <CheckCircle2 size={18} style={{ color: project.color }} />
                 <span>Completed tasks</span>
-                <span className="rounded-full border-2 border-[#1f7e59] bg-[#d5ffe0] px-2.5 py-1 text-xs font-bold uppercase text-[#1f7e59]">
+                <span className="rounded-full border-2 border-[#555555] bg-[#e5e5e5] px-2.5 py-1 text-xs font-bold uppercase text-[#555555]">
                   {completedTasks.length}
                 </span>
               </h2>
-              <MoreHorizontal size={18} className="text-[#6e6597]" />
+              <MoreHorizontal size={18} className="text-[#666666]" />
             </button>
 
             {showCompleted ? (
@@ -260,7 +260,7 @@ export function ProjectDetail() {
                     />
                   ))
                 ) : (
-                  <div className="rounded-[18px] border-2 border-dashed border-[#21185b] bg-white/70 px-4 py-8 text-center text-sm text-[#6e6597]">
+                  <div className="rounded-[18px] border-2 border-dashed border-[#1a1a1a] bg-white/70 px-4 py-8 text-center text-sm text-[#666666]">
                     Completed work will collect here instead of disappearing.
                   </div>
                 )}
@@ -271,7 +271,7 @@ export function ProjectDetail() {
 
         <aside className="space-y-5">
           <section className="retro-panel rounded-[28px] p-5">
-            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#6e6597]">
+            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#666666]">
               Project snapshot
             </h3>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -282,8 +282,8 @@ export function ProjectDetail() {
                 { label: "Done", value: String(completedTasks.length) },
               ].map((item) => (
                 <div key={item.label} className="retro-panel rounded-[18px] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6e6597]">{item.label}</p>
-                  <p className="mt-2 text-2xl font-black text-[#181457]">{item.value}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#666666]">{item.label}</p>
+                  <p className="mt-2 text-2xl font-black text-[#1a1a1a]">{item.value}</p>
                 </div>
               ))}
             </div>
@@ -291,8 +291,8 @@ export function ProjectDetail() {
 
           <section className="retro-panel rounded-[28px] p-5">
             <div className="flex items-center gap-2">
-              <Link2 size={16} className="text-[#6e6597]" />
-              <h3 className="font-black uppercase tracking-[0.04em] text-[#181457]">Linked projects</h3>
+              <Link2 size={16} className="text-[#666666]" />
+              <h3 className="font-black uppercase tracking-[0.04em] text-[#1a1a1a]">Linked projects</h3>
             </div>
             <div className="mt-4 space-y-2">
               {linkedProjects.length > 0 ? (
@@ -312,16 +312,16 @@ export function ProjectDetail() {
                         style={{ backgroundColor: `${linkedProject.color}26` }}
                       />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold uppercase text-[#181457]">
+                        <p className="truncate text-sm font-bold uppercase text-[#1a1a1a]">
                           {linkedProject.title}
                         </p>
-                        <p className="text-xs text-[#6e6597]">{linkedTaskCount} tasks</p>
+                        <p className="text-xs text-[#666666]">{linkedTaskCount} tasks</p>
                       </div>
                     </button>
                   );
                 })
               ) : (
-                <div className="rounded-[18px] border-2 border-dashed border-[#21185b] bg-white/70 px-4 py-8 text-center text-sm text-[#6e6597]">
+                <div className="rounded-[18px] border-2 border-dashed border-[#1a1a1a] bg-white/70 px-4 py-8 text-center text-sm text-[#666666]">
                   No linked projects yet.
                 </div>
               )}

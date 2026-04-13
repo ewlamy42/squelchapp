@@ -104,8 +104,8 @@ export function TaskCard({
     ...(isDark
       ? {
           backgroundImage: task.completed
-            ? "linear-gradient(180deg, rgba(13,108,82,0.42), rgba(14,50,43,0.92))"
-            : "linear-gradient(180deg, rgba(28,23,94,0.98), rgba(18,15,53,0.95))",
+            ? "linear-gradient(180deg, rgba(60,60,60,0.42), rgba(30,30,30,0.92))"
+            : "linear-gradient(180deg, rgba(30,30,30,0.98), rgba(15,15,15,0.95))",
         }
       : {}),
   };
@@ -159,10 +159,10 @@ export function TaskCard({
         disabled={isTearing || fragment}
         className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
           task.completed
-            ? "border-[#1f7e59] bg-[#26c48f] text-white"
+            ? "border-[#555555] bg-[#888888] text-white"
             : isDark
-              ? "border-[#fff2a8] bg-[#0f123b] text-transparent hover:border-[#6ff3d5]"
-              : "border-[#21185b] bg-white text-transparent hover:border-[#2347d8]"
+              ? "border-[#cccccc] bg-[#111111] text-transparent hover:border-[#cccccc]"
+              : "border-[#1a1a1a] bg-white text-transparent hover:border-[#1a1a1a]"
         } ${isTearing ? "opacity-70" : ""}`}
       >
         <Check size={14} />
@@ -186,7 +186,7 @@ export function TaskCard({
                     setIsEditing(false);
                   }
                 }}
-                className="retro-input w-full rounded-md bg-white px-3 py-2 text-sm font-bold text-[#181457] outline-none ring-0"
+                className="retro-input w-full rounded-md bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none ring-0"
                 autoFocus
               />
             ) : (
@@ -194,28 +194,28 @@ export function TaskCard({
                 className={`text-sm leading-6 transition-transform duration-300 ${
                   task.completed
                     ? isDark
-                      ? "text-[#c9ffe0] line-through"
-                      : "text-[#537663] line-through"
+                      ? "text-[#cccccc] line-through"
+                      : "text-[#888888] line-through"
                     : isDark
-                      ? "text-[#f7f4ff]"
-                      : "text-[#181457]"
+                      ? "text-[#f0f0f0]"
+                      : "text-[#1a1a1a]"
                 } ${isTearing ? "translate-x-1" : ""}`}
               >
                 {isEditing && fragment ? draftTitle : task.title}
               </p>
             )}
 
-            <div className={`mt-2 flex flex-wrap items-center gap-2 text-xs ${isDark ? "text-[#ddd4ff]" : "text-[#6e6597]"}`}>
-              <span className={`rounded-full border-2 px-2 py-1 font-bold uppercase ${isDark ? "border-[#fff2a8] bg-white/5" : "border-[#21185b] bg-white"}`}>
+            <div className={`mt-2 flex flex-wrap items-center gap-2 text-xs ${isDark ? "text-[#cccccc]" : "text-[#666666]"}`}>
+              <span className={`rounded-full border-2 px-2 py-1 font-bold uppercase ${isDark ? "border-[#cccccc] bg-white/5" : "border-[#1a1a1a] bg-white"}`}>
                 Added {formatWhen(task.createdAt)}
               </span>
               {task.completedAt ? (
-                <span className="rounded-full border-2 border-[#1f7e59] bg-[#d5ffe0] px-2 py-1 font-bold uppercase text-[#1f7e59]">
+                <span className="rounded-full border-2 border-[#555555] bg-[#e5e5e5] px-2 py-1 font-bold uppercase text-[#555555]">
                   Done {formatWhen(task.completedAt)}
                 </span>
               ) : null}
               {linkedCount > 0 ? (
-                <span className="rounded-full border-2 border-[#21185b] bg-[#fbc7ff] px-2 py-1 font-bold uppercase text-[#4d257e]">
+                <span className="rounded-full border-2 border-[#1a1a1a] bg-[#e5e5e5] px-2 py-1 font-bold uppercase text-[#333333]">
                   {linkedCount} linked
                 </span>
               ) : null}
@@ -231,7 +231,7 @@ export function TaskCard({
                   setIsEditing(true);
                 }}
                 disabled={fragment}
-                className={`rounded-md p-2 transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-white/10 hover:text-white" : "text-[#6e6597] hover:bg-white hover:text-[#181457]"}`}
+                className={`rounded-md p-2 transition-colors ${isDark ? "text-[#cccccc] hover:bg-white/10 hover:text-white" : "text-[#666666] hover:bg-white hover:text-[#1a1a1a]"}`}
                 aria-label="Edit task"
               >
                 <Pencil size={14} />
@@ -242,7 +242,7 @@ export function TaskCard({
                 type="button"
                 onClick={() => onToggleComplete(task.id)}
                 disabled={fragment}
-                className={`rounded-md p-2 transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-white/10 hover:text-white" : "text-[#6e6597] hover:bg-white hover:text-[#181457]"}`}
+                className={`rounded-md p-2 transition-colors ${isDark ? "text-[#cccccc] hover:bg-white/10 hover:text-white" : "text-[#666666] hover:bg-white hover:text-[#1a1a1a]"}`}
                 aria-label="Restore task"
               >
                 <RotateCcw size={14} />
@@ -252,7 +252,7 @@ export function TaskCard({
               type="button"
               onClick={() => onDelete(task.id)}
               disabled={fragment}
-              className={`rounded-md p-2 transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-[#3c1848] hover:text-[#ff98cf]" : "text-[#6e6597] hover:bg-[#ffe0e9] hover:text-[#c82d66]"}`}
+              className={`rounded-md p-2 transition-colors ${isDark ? "text-[#cccccc] hover:bg-[#333333] hover:text-[#cccccc]" : "text-[#666666] hover:bg-[#e5e5e5] hover:text-[#555555]"}`}
               aria-label="Delete task"
             >
               <Trash2 size={14} />
@@ -270,8 +270,8 @@ export function TaskCard({
                 currentProject
                   ? "border-transparent"
                   : isDark
-                    ? "border-dashed border-[#fff2a8] text-[#ddd4ff] hover:border-[#6ff3d5] hover:text-white"
-                    : "border-dashed border-[#21185b] text-[#6e6597] hover:border-[#2347d8] hover:text-[#181457]"
+                    ? "border-dashed border-[#cccccc] text-[#cccccc] hover:border-[#cccccc] hover:text-white"
+                    : "border-dashed border-[#1a1a1a] text-[#666666] hover:border-[#1a1a1a] hover:text-[#1a1a1a]"
               }`}
               style={
                 currentProject
@@ -293,7 +293,7 @@ export function TaskCard({
                   isDark
                     ? {
                         backgroundImage:
-                          "linear-gradient(180deg, rgba(28,23,94,0.98), rgba(18,15,53,0.95))",
+                          "linear-gradient(180deg, rgba(30,30,30,0.98), rgba(15,15,15,0.95))",
                       }
                     : undefined
                 }
@@ -304,7 +304,7 @@ export function TaskCard({
                     onUpdateTask(task.id, { projectId: null });
                     setShowProjects(false);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-white/10" : "text-[#4a4177] hover:bg-white/70"}`}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${isDark ? "text-[#cccccc] hover:bg-white/10" : "text-[#666666] hover:bg-white/70"}`}
                 >
                   <div className="h-3 w-3 rounded-full border border-slate-300" />
                   <span>No project</span>
@@ -320,11 +320,11 @@ export function TaskCard({
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-white/70 ${
                       project.id === task.projectId
                         ? isDark
-                          ? "bg-[#28306d] text-[#fff2a8]"
-                          : "bg-[#dbe3ff] text-[#2347d8]"
+                          ? "bg-[#333333] text-[#cccccc]"
+                          : "bg-[#e5e5e5] text-[#1a1a1a]"
                         : isDark
-                          ? "text-[#f7f4ff]"
-                          : "text-[#181457]"
+                          ? "text-[#f0f0f0]"
+                          : "text-[#1a1a1a]"
                     }`}
                   >
                     <div
@@ -339,7 +339,7 @@ export function TaskCard({
           </div>
         ) : currentProject ? (
           <div
-            className={`mt-3 inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.05em] ${isDark ? "border-[#fff2a8]" : "border-[#21185b]"}`}
+            className={`mt-3 inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.05em] ${isDark ? "border-[#cccccc]" : "border-[#1a1a1a]"}`}
             style={{
               backgroundColor: `${currentProject.color}15`,
               color: currentProject.color,
@@ -357,7 +357,7 @@ export function TaskCard({
     <div
       className={`relative rounded-2xl border p-4 shadow-sm transition-all ${
         task.completed
-          ? "retro-panel border-[#2d7f57] bg-[linear-gradient(180deg,_rgba(235,255,238,0.96),_rgba(201,249,221,0.92))]"
+          ? "retro-panel border-[#555555] bg-[linear-gradient(180deg,_rgba(240,240,240,0.96),_rgba(229,229,229,0.92))]"
           : "retro-panel bg-white"
       }`}
       style={
@@ -380,13 +380,13 @@ export function TaskCard({
             className="absolute inset-0 rounded-2xl border-2 transition-all duration-300 ease-out"
             style={{
               ...tearSurfaceStyle,
-              borderColor: isDark ? "#fff2a8" : "#21185b",
+              borderColor: isDark ? "#cccccc" : "#1a1a1a",
               clipPath:
                 "polygon(0 0, 100% 0, 100% 44%, 92% 48%, 84% 42%, 74% 50%, 65% 43%, 54% 51%, 44% 42%, 33% 50%, 23% 44%, 13% 49%, 0 43%)",
               transform: isTearing ? "translate(-14px, -22px) rotate(-6deg)" : "translateY(0)",
               boxShadow: isDark
                 ? "0 16px 24px rgba(0,0,0,0.42)"
-                : "0 16px 24px rgba(24,20,87,0.18)",
+                : "0 16px 24px rgba(26,26,26,0.18)",
             }}
           >
             <div className="absolute inset-0 px-4 py-4">
@@ -402,13 +402,13 @@ export function TaskCard({
             className="absolute inset-0 rounded-2xl border-2 transition-all duration-300 ease-out"
             style={{
               ...tearSurfaceStyle,
-              borderColor: isDark ? "#fff2a8" : "#21185b",
+              borderColor: isDark ? "#cccccc" : "#1a1a1a",
               clipPath:
                 "polygon(0 55%, 11% 49%, 22% 57%, 33% 50%, 43% 58%, 54% 49%, 64% 57%, 74% 50%, 83% 57%, 92% 50%, 100% 55%, 100% 100%, 0 100%)",
               transform: isTearing ? "translate(18px, 30px) rotate(7deg)" : "translateY(0)",
               boxShadow: isDark
                 ? "0 18px 30px rgba(0,0,0,0.48)"
-                : "0 18px 30px rgba(24,20,87,0.2)",
+                : "0 18px 30px rgba(26,26,26,0.2)",
             }}
           >
             <div className="absolute inset-0 px-4 py-4">
@@ -420,7 +420,7 @@ export function TaskCard({
           className="absolute left-[8%] top-[46%] h-[5px] w-[84%] transition-all duration-300 ease-out"
           style={{
             background:
-              "repeating-linear-gradient(102deg, rgba(255,255,255,0.95), rgba(255,255,255,0.95) 9px, rgba(33,24,91,0.78) 9px, rgba(33,24,91,0.78) 14px)",
+              "repeating-linear-gradient(102deg, rgba(255,255,255,0.95), rgba(255,255,255,0.95) 9px, rgba(30,30,30,0.78) 9px, rgba(30,30,30,0.78) 14px)",
             transform: isTearing ? "rotate(-6deg) scaleX(1.03)" : "scaleX(0.88)",
             opacity: isTearing ? 1 : 0,
             boxShadow:
