@@ -15,6 +15,7 @@ export interface Task {
   linkedTaskIds: string[];
   createdAt: string;
   completedAt?: string;
+  dueDate?: string;
 }
 
 export interface Project {
@@ -82,6 +83,7 @@ const initialTasks: Task[] = [
     projectId: "proj-1",
     linkedTaskIds: [],
     createdAt: "2026-04-04T09:00:00.000Z",
+    dueDate: "2026-04-13T17:00:00.000Z",
   },
   {
     id: "task-2",
@@ -90,6 +92,7 @@ const initialTasks: Task[] = [
     projectId: "proj-1",
     linkedTaskIds: ["task-3"],
     createdAt: "2026-04-05T09:00:00.000Z",
+    dueDate: "2026-04-15T17:00:00.000Z",
   },
   {
     id: "task-3",
@@ -98,6 +101,7 @@ const initialTasks: Task[] = [
     projectId: "proj-1",
     linkedTaskIds: [],
     createdAt: "2026-04-05T11:30:00.000Z",
+    dueDate: "2026-04-14T12:00:00.000Z",
   },
   {
     id: "task-4",
@@ -107,6 +111,7 @@ const initialTasks: Task[] = [
     linkedTaskIds: [],
     createdAt: "2026-04-06T06:45:00.000Z",
     completedAt: "2026-04-06T07:30:00.000Z",
+    dueDate: "2026-04-06T08:00:00.000Z",
   },
   {
     id: "task-5",
@@ -115,6 +120,7 @@ const initialTasks: Task[] = [
     projectId: "proj-2",
     linkedTaskIds: [],
     createdAt: "2026-04-06T08:30:00.000Z",
+    dueDate: "2026-04-13T12:00:00.000Z",
   },
   {
     id: "task-6",
@@ -123,6 +129,7 @@ const initialTasks: Task[] = [
     projectId: "proj-3",
     linkedTaskIds: ["task-7"],
     createdAt: "2026-04-04T13:00:00.000Z",
+    dueDate: "2026-04-25T17:00:00.000Z",
   },
   {
     id: "task-7",
@@ -131,6 +138,7 @@ const initialTasks: Task[] = [
     projectId: "proj-3",
     linkedTaskIds: [],
     createdAt: "2026-04-05T14:00:00.000Z",
+    dueDate: "2026-04-30T17:00:00.000Z",
   },
   {
     id: "task-8",
@@ -139,6 +147,7 @@ const initialTasks: Task[] = [
     projectId: "proj-3",
     linkedTaskIds: [],
     createdAt: "2026-04-06T15:00:00.000Z",
+    dueDate: "2026-04-20T17:00:00.000Z",
   },
   {
     id: "task-9",
@@ -147,6 +156,7 @@ const initialTasks: Task[] = [
     projectId: null,
     linkedTaskIds: [],
     createdAt: "2026-04-06T16:00:00.000Z",
+    dueDate: "2026-04-13T18:00:00.000Z",
   },
   {
     id: "task-10",
@@ -155,6 +165,7 @@ const initialTasks: Task[] = [
     projectId: null,
     linkedTaskIds: [],
     createdAt: "2026-04-06T16:30:00.000Z",
+    dueDate: "2026-04-16T17:00:00.000Z",
   },
   {
     id: "task-11",
@@ -163,6 +174,7 @@ const initialTasks: Task[] = [
     projectId: "proj-1",
     linkedTaskIds: [],
     createdAt: "2026-04-06T17:00:00.000Z",
+    dueDate: "2026-04-11T17:00:00.000Z",
   },
   {
     id: "task-12",
@@ -171,6 +183,7 @@ const initialTasks: Task[] = [
     projectId: "proj-1",
     linkedTaskIds: [],
     createdAt: "2026-04-06T17:30:00.000Z",
+    dueDate: "2026-04-14T10:00:00.000Z",
   },
   {
     id: "task-13",
@@ -179,6 +192,7 @@ const initialTasks: Task[] = [
     projectId: null,
     linkedTaskIds: [],
     createdAt: "2026-04-06T18:00:00.000Z",
+    dueDate: "2026-04-14T17:00:00.000Z",
   },
   {
     id: "task-14",
@@ -187,6 +201,7 @@ const initialTasks: Task[] = [
     projectId: null,
     linkedTaskIds: [],
     createdAt: "2026-04-06T18:30:00.000Z",
+    dueDate: "2026-04-18T17:00:00.000Z",
   },
   {
     id: "task-15",
@@ -195,6 +210,62 @@ const initialTasks: Task[] = [
     projectId: "proj-3",
     linkedTaskIds: [],
     createdAt: "2026-04-06T19:00:00.000Z",
+    dueDate: "2026-04-22T17:00:00.000Z",
+  },
+  // Interview prep tasks (1 hour before each interview)
+  {
+    id: "task-16",
+    title: "Interview Prep: Gusto (2pm)",
+    completed: false,
+    projectId: null,
+    linkedTaskIds: [],
+    createdAt: "2026-04-10T09:00:00.000Z",
+    dueDate: "2026-04-13T20:00:00.000Z",
+  },
+  {
+    id: "task-17",
+    title: "Interview Prep: SoFi (4pm)",
+    completed: false,
+    projectId: null,
+    linkedTaskIds: [],
+    createdAt: "2026-04-10T09:00:00.000Z",
+    dueDate: "2026-04-13T22:00:00.000Z",
+  },
+  {
+    id: "task-18",
+    title: "Interview Prep: Gusto (1pm)",
+    completed: false,
+    projectId: null,
+    linkedTaskIds: [],
+    createdAt: "2026-04-10T09:00:00.000Z",
+    dueDate: "2026-04-15T19:00:00.000Z",
+  },
+  {
+    id: "task-19",
+    title: "Interview Prep: BetterUp (9am)",
+    completed: false,
+    projectId: null,
+    linkedTaskIds: [],
+    createdAt: "2026-04-10T09:00:00.000Z",
+    dueDate: "2026-04-20T15:00:00.000Z",
+  },
+  {
+    id: "task-20",
+    title: "Interview Prep: Gusto (2pm)",
+    completed: false,
+    projectId: null,
+    linkedTaskIds: [],
+    createdAt: "2026-04-10T09:00:00.000Z",
+    dueDate: "2026-04-20T20:00:00.000Z",
+  },
+  {
+    id: "task-21",
+    title: "Interview Prep: Gusto (1pm)",
+    completed: false,
+    projectId: null,
+    linkedTaskIds: [],
+    createdAt: "2026-04-10T09:00:00.000Z",
+    dueDate: "2026-04-21T19:00:00.000Z",
   },
 ];
 
