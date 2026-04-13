@@ -6,8 +6,8 @@ Use this checklist the first time you set up `squelchapp` on your machine.
 
 - have Git installed
 - have a GitHub account with access to the repository
-- have your own Vercel account
-- have been invited to the shared Vercel team that owns the project
+- know that you will create your own Vercel account in the next step
+- be ready to accept an invitation to the shared Vercel team after your account is created
 
 ## What These Tools Are For
 
