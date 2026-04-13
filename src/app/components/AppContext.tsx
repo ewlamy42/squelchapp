@@ -7,6 +7,8 @@ import React, {
   type ReactNode,
 } from "react";
 
+export type TaskPriority = "low" | "medium" | "high";
+
 export interface Task {
   id: string;
   title: string;
@@ -15,6 +17,8 @@ export interface Task {
   linkedTaskIds: string[];
   createdAt: string;
   completedAt?: string;
+  priority?: TaskPriority | null;
+  notes?: string;
 }
 
 export interface Project {

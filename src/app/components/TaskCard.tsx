@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Folder, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import { type Project, type Task, useApp } from "./AppContext";
+import { Check, ChevronDown, Folder, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { type Project, type Task, type TaskPriority, useApp } from "./AppContext";
 
 interface TaskCardProps {
   task: Task;
@@ -93,8 +93,32 @@ export function TaskCard({
   const [draftTitle, setDraftTitle] = useState(task.title);
   const [showProjects, setShowProjects] = useState(false);
   const [isTearing, setIsTearing] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [draftNotes, setDraftNotes] = useState(task.notes ?? "");
   const tearTimeoutRef = useRef<number | null>(null);
   const isDark = theme === "dark";
+
+  const priorityConfig: Record<TaskPriority, { label: string; color: string; bg: string }> = {
+    low: { label: "Low", color: "#1f7e59", bg: "#d5ffe0" },
+    medium: { label: "Medium", color: "#b45309", bg: "#fef3c7" },
+    high: { label: "High", color: "#be123c", bg: "#ffe4e6" },
+  };
+
+  const priorityCycle: (TaskPriority | null)[] = [null, "low", "medium", "high"];
+
+  const cyclePriority = () => {
+    if (!onUpdateTask) return;
+    const current = task.priority ?? null;
+    const idx = priorityCycle.indexOf(current);
+    const next = priorityCycle[(idx + 1) % priorityCycle.length];
+    onUpdateTask(task.id, { priority: next });
+  };
+
+  const saveNotes = () => {
+    if (onUpdateTask) {
+      onUpdateTask(task.id, { notes: draftNotes });
+    }
+  };
 
   const currentProject = useMemo(
     () => projects.find((project) => project.id === task.projectId),
@@ -219,7 +243,64 @@ export function TaskCard({
                   {linkedCount} linked
                 </span>
               ) : null}
+              {!fragment && onUpdateTask && !task.completed ? (
+                <button
+                  type="button"
+                  onClick={cyclePriority}
+                  className="rounded-full border-2 px-2 py-1 font-bold uppercase transition-colors"
+                  style={
+                    task.priority
+                      ? {
+                          borderColor: priorityConfig[task.priority].color,
+                          backgroundColor: priorityConfig[task.priority].bg,
+                          color: priorityConfig[task.priority].color,
+                        }
+                      : { borderColor: isDark ? "#fff2a8" : "#21185b", background: "transparent", color: isDark ? "#ddd4ff" : "#6e6597" }
+                  }
+                  aria-label="Cycle priority"
+                >
+                  {task.priority ? priorityConfig[task.priority].label : "No priority"}
+                </button>
+              ) : task.priority && !fragment ? (
+                <span
+                  className="rounded-full border-2 px-2 py-1 font-bold uppercase"
+                  style={{
+                    borderColor: priorityConfig[task.priority].color,
+                    backgroundColor: priorityConfig[task.priority].bg,
+                    color: priorityConfig[task.priority].color,
+                  }}
+                >
+                  {priorityConfig[task.priority].label}
+                </span>
+              ) : null}
             </div>
+
+            {!fragment && onUpdateTask && !task.completed ? (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowNotes((v) => !v)}
+                  className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${isDark ? "text-[#ddd4ff] hover:text-white" : "text-[#6e6597] hover:text-[#181457]"}`}
+                >
+                  <ChevronDown size={12} className={`transition-transform ${showNotes ? "rotate-180" : ""}`} />
+                  {task.notes ? "Notes" : "Add notes"}
+                </button>
+                {showNotes ? (
+                  <textarea
+                    value={draftNotes}
+                    onChange={(e) => setDraftNotes(e.target.value)}
+                    onBlur={saveNotes}
+                    placeholder="Add notes here..."
+                    rows={3}
+                    className={`mt-2 w-full rounded-xl border-2 px-3 py-2 text-sm outline-none resize-none ${isDark ? "border-[#fff2a8] bg-white/5 text-[#f7f4ff] placeholder:text-[#ddd4ff]" : "border-[#21185b] bg-white text-[#181457] placeholder:text-[#6e6597]"}`}
+                  />
+                ) : task.notes ? (
+                  <p className={`mt-1 text-xs leading-5 ${isDark ? "text-[#ddd4ff]" : "text-[#4a4177]"}`}>{task.notes}</p>
+                ) : null}
+              </div>
+            ) : task.notes && !fragment ? (
+              <p className={`mt-2 text-xs leading-5 ${isDark ? "text-[#ddd4ff]" : "text-[#4a4177]"}`}>{task.notes}</p>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-1">
