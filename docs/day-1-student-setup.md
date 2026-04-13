@@ -9,6 +9,16 @@ Use this checklist the first time you set up `squelchapp` on your machine.
 - have your own Vercel account
 - have been invited to the shared Vercel team that owns the project
 
+## What These Tools Are For
+
+- `Git`: downloads the repo, lets you pull updates, create branches, and push your work
+- `GitHub`: hosts the shared repository, pull requests, and team code review
+- `Vercel`: hosts the shared live app, creates preview deployments, and manages production deploys
+- `Vercel CLI`: connects your local repo to the shared Vercel project and lets you deploy from your machine or through this assistant
+- `Node.js`: runs the JavaScript tooling used to build and serve the app locally
+- `npm`: installs project dependencies and runs the repo scripts like `npm run dev` and `npm run build`
+- `Volta`: keeps the Node.js and npm versions consistent across Mac and Windows machines so everyone uses the same toolchain
+
 ## Create Your Vercel Account
 
 1. Go to [vercel.com/signup](https://vercel.com/signup).
