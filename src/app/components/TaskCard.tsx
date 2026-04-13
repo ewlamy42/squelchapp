@@ -1,11 +1,10 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Check, Link2, Folder } from "lucide-react";
-import { Task, Project } from "./AppContext";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, Folder, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { type Project, type Task, useApp } from "./AppContext";
 
 interface TaskCardProps {
   task: Task;
-  onComplete: (id: string) => void;
+  onToggleComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onUpdateTask?: (id: string, updates: Partial<Task>) => void;
   linkedCount?: number;
@@ -13,299 +12,427 @@ interface TaskCardProps {
   showProjectSelector?: boolean;
 }
 
-// Improved paper crinkling sound
-const playCompletionSound = () => {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+function formatWhen(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(value));
+}
+
+function playRipSound() {
+  const AudioContextCtor =
+    window.AudioContext ||
+    (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
+
+  if (!AudioContextCtor) {
+    return;
+  }
+
+  const audioContext = new AudioContextCtor();
   const now = audioContext.currentTime;
-  
-  // Create static-like noise bursts for paper crinkling
-  for (let i = 0; i < 12; i++) {
-    const bufferSize = audioContext.sampleRate * 0.04; // 40ms of noise
+
+  for (let burst = 0; burst < 5; burst += 1) {
+    const duration = 0.04 + burst * 0.015;
+    const bufferSize = Math.floor(audioContext.sampleRate * duration);
     const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
     const data = buffer.getChannelData(0);
-    
-    // Generate white noise with varying intensity
-    const intensity = 0.15 - (i * 0.01); // Fade out over time
-    for (let j = 0; j < bufferSize; j++) {
-      data[j] = (Math.random() * 2 - 1) * intensity;
-    }
-    
-    const noise = audioContext.createBufferSource();
-    noise.buffer = buffer;
-    
-    const filter = audioContext.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 2000 + Math.random() * 3000; // Varying high frequencies for crispness
-    filter.Q.value = 0.5;
-    
-    const gainNode = audioContext.createGain();
-    const startTime = now + (i * 0.035); // Overlapping bursts
-    
-    gainNode.gain.setValueAtTime(0, startTime);
-    gainNode.gain.linearRampToValueAtTime(intensity, startTime + 0.005);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.04);
-    
-    noise.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    noise.start(startTime);
-    noise.stop(startTime + 0.04);
-  }
-  
-  // Add final crumple with denser static burst
-  const finalBufferSize = audioContext.sampleRate * 0.15;
-  const finalBuffer = audioContext.createBuffer(1, finalBufferSize, audioContext.sampleRate);
-  const finalData = finalBuffer.getChannelData(0);
-  
-  for (let i = 0; i < finalBufferSize; i++) {
-    finalData[i] = (Math.random() * 2 - 1) * 0.12 * (1 - i / finalBufferSize);
-  }
-  
-  const finalNoise = audioContext.createBufferSource();
-  finalNoise.buffer = finalBuffer;
-  
-  const finalFilter = audioContext.createBiquadFilter();
-  finalFilter.type = 'highpass';
-  finalFilter.frequency.value = 1000;
-  
-  const finalGain = audioContext.createGain();
-  const finalStart = now + 0.35;
-  finalGain.gain.setValueAtTime(0.15, finalStart);
-  finalGain.gain.exponentialRampToValueAtTime(0.001, finalStart + 0.15);
-  
-  finalNoise.connect(finalFilter);
-  finalFilter.connect(finalGain);
-  finalGain.connect(audioContext.destination);
-  
-  finalNoise.start(finalStart);
-  finalNoise.stop(finalStart + 0.15);
-};
 
-export function TaskCard({ 
-  task, 
-  onComplete, 
-  onDelete, 
+    for (let index = 0; index < bufferSize; index += 1) {
+      const envelope = 1 - index / bufferSize;
+      data[index] = (Math.random() * 2 - 1) * envelope * (0.24 - burst * 0.03);
+    }
+
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+
+    const filter = audioContext.createBiquadFilter();
+    filter.type = burst % 2 === 0 ? "highpass" : "bandpass";
+    filter.frequency.value = 1200 + burst * 380;
+    filter.Q.value = 0.6;
+
+    const gain = audioContext.createGain();
+    const startAt = now + burst * 0.035;
+    gain.gain.setValueAtTime(0.001, startAt);
+    gain.gain.exponentialRampToValueAtTime(0.16, startAt + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioContext.destination);
+
+    source.start(startAt);
+    source.stop(startAt + duration);
+  }
+
+  const tailOscillator = audioContext.createOscillator();
+  const tailGain = audioContext.createGain();
+  tailOscillator.type = "triangle";
+  tailOscillator.frequency.setValueAtTime(180, now + 0.06);
+  tailOscillator.frequency.exponentialRampToValueAtTime(90, now + 0.22);
+  tailGain.gain.setValueAtTime(0.001, now + 0.06);
+  tailGain.gain.exponentialRampToValueAtTime(0.03, now + 0.08);
+  tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+  tailOscillator.connect(tailGain);
+  tailGain.connect(audioContext.destination);
+  tailOscillator.start(now + 0.06);
+  tailOscillator.stop(now + 0.22);
+}
+
+export function TaskCard({
+  task,
+  onToggleComplete,
+  onDelete,
   onUpdateTask,
   linkedCount = 0,
   projects = [],
-  showProjectSelector = false
+  showProjectSelector = false,
 }: TaskCardProps) {
-  const [isPressed, setIsPressed] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
+  const { theme } = useApp();
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(task.title);
   const [showProjects, setShowProjects] = useState(false);
+  const [isTearing, setIsTearing] = useState(false);
+  const tearTimeoutRef = useRef<number | null>(null);
+  const isDark = theme === "dark";
 
-  const currentProject = projects.find(p => p.id === task.projectId);
-
-  const handleComplete = () => {
-    setIsCompleting(true);
-    playCompletionSound();
-    setTimeout(() => {
-      onComplete(task.id);
-      onDelete(task.id);
-    }, 700);
+  const currentProject = useMemo(
+    () => projects.find((project) => project.id === task.projectId),
+    [projects, task.projectId]
+  );
+  const tearSurfaceStyle = {
+    ...(isDark
+      ? {
+          backgroundImage: task.completed
+            ? "linear-gradient(180deg, rgba(13,108,82,0.42), rgba(14,50,43,0.92))"
+            : "linear-gradient(180deg, rgba(28,23,94,0.98), rgba(18,15,53,0.95))",
+        }
+      : {}),
   };
 
-  const handleProjectSelect = (projectId: string | null) => {
-    if (onUpdateTask) {
-      onUpdateTask(task.id, { projectId });
-      setShowProjects(false);
+  const saveTitle = () => {
+    const nextTitle = draftTitle.trim();
+
+    if (!nextTitle) {
+      setDraftTitle(task.title);
+      setIsEditing(false);
+      return;
     }
+
+    if (nextTitle !== task.title && onUpdateTask) {
+      onUpdateTask(task.id, { title: nextTitle });
+    }
+
+    setIsEditing(false);
   };
 
-  if (task.completed && !isCompleting) {
-    return null;
-  }
+  useEffect(() => {
+    return () => {
+      if (tearTimeoutRef.current) {
+        window.clearTimeout(tearTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 20, rotateX: -15 }}
-        animate={{
-          opacity: isCompleting ? 0 : 1,
-          y: isCompleting ? -150 : 0,
-          x: isCompleting ? 100 : 0,
-          rotateX: isCompleting ? 90 : 0,
-          rotateZ: isCompleting ? -45 : 0,
-          scale: isPressed ? 0.98 : isCompleting ? 0.6 : 1,
-        }}
-        exit={{
-          opacity: 0,
-          scale: 0.5,
-          rotateZ: 30,
-          transition: { duration: 0.3 },
-        }}
-        transition={{
-          type: "spring",
-          stiffness: isCompleting ? 200 : 260,
-          damping: isCompleting ? 15 : 20,
-        }}
-        onMouseDown={() => setIsPressed(true)}
-        onMouseUp={() => setIsPressed(false)}
-        onMouseLeave={() => setIsPressed(false)}
-        className="relative group"
-        style={{ zIndex: showProjects ? 101 : 1 }}
+  const handleToggleComplete = () => {
+    if (task.completed) {
+      onToggleComplete(task.id);
+      return;
+    }
+
+    setIsTearing(true);
+    playRipSound();
+
+    tearTimeoutRef.current = window.setTimeout(() => {
+      onToggleComplete(task.id);
+      setIsTearing(false);
+      tearTimeoutRef.current = null;
+    }, 360);
+  };
+
+  const renderCardContent = (fragment = false) => (
+    <div className={`flex items-start gap-3 ${fragment ? "pointer-events-none" : ""}`}>
+      <button
+        type="button"
+        aria-label={task.completed ? "Mark task as incomplete" : "Mark task as complete"}
+        onClick={handleToggleComplete}
+        disabled={isTearing || fragment}
+        className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+          task.completed
+            ? "border-[#1f7e59] bg-[#26c48f] text-white"
+            : isDark
+              ? "border-[#fff2a8] bg-[#0f123b] text-transparent hover:border-[#6ff3d5]"
+              : "border-[#21185b] bg-white text-transparent hover:border-[#2347d8]"
+        } ${isTearing ? "opacity-70" : ""}`}
       >
-        <div
-          className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-100 cursor-pointer select-none relative overflow-hidden"
-          style={{
-            background: "linear-gradient(145deg, #ffffff 0%, #fefefe 100%)",
-          }}
-        >
-          <div className="flex items-start gap-3 relative z-10">
-            {/* Checkbox */}
-            <button
-              onClick={handleComplete}
-              className="flex-shrink-0 w-5 h-5 rounded border-2 border-gray-300 hover:border-indigo-500 transition-colors flex items-center justify-center group-hover:scale-110 transition-transform"
-              style={{
-                background: task.completed ? "#4F46E5" : "white",
-              }}
-            >
-              {task.completed && <Check size={14} className="text-white" />}
-            </button>
+        <Check size={14} />
+      </button>
 
-            {/* Task Content */}
-            <div className="flex-1 min-w-0">
-              <p
-                className="text-gray-800 break-words"
-                style={{
-                  textDecoration: task.completed ? "line-through" : "none",
-                  opacity: task.completed ? 0.5 : 1,
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {isEditing && !fragment ? (
+              <input
+                value={draftTitle}
+                onChange={(event) => setDraftTitle(event.target.value)}
+                onBlur={saveTitle}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    saveTitle();
+                  }
+
+                  if (event.key === "Escape") {
+                    setDraftTitle(task.title);
+                    setIsEditing(false);
+                  }
                 }}
+                className="retro-input w-full rounded-md bg-white px-3 py-2 text-sm font-bold text-[#181457] outline-none ring-0"
+                autoFocus
+              />
+            ) : (
+              <p
+                className={`text-sm leading-6 transition-transform duration-300 ${
+                  task.completed
+                    ? isDark
+                      ? "text-[#c9ffe0] line-through"
+                      : "text-[#537663] line-through"
+                    : isDark
+                      ? "text-[#f7f4ff]"
+                      : "text-[#181457]"
+                } ${isTearing ? "translate-x-1" : ""}`}
               >
-                {task.title}
+                {isEditing && fragment ? draftTitle : task.title}
               </p>
+            )}
 
-              {/* Project Tag & Linked Items */}
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {/* Project Assignment Tag */}
-                {showProjectSelector && (
-                  <div className="relative">
-                    {currentProject ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowProjects(!showProjects);
-                        }}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all hover:opacity-80"
-                        style={{
-                          backgroundColor: `${currentProject.color}20`,
-                          color: currentProject.color,
-                          border: `1px solid ${currentProject.color}40`,
-                        }}
-                      >
-                        <Folder size={11} />
-                        <span>{currentProject.title}</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowProjects(!showProjects);
-                        }}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all border border-dashed border-gray-300 hover:border-gray-400 text-gray-500 hover:text-gray-700 bg-gray-50"
-                      >
-                        <Folder size={11} />
-                        <span>Add to project</span>
-                      </button>
-                    )}
-                    
-                    {/* Inline project selector - expands below */}
-                    {showProjects && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="absolute left-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1.5 min-w-[200px] z-10"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleProjectSelect(null);
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors text-gray-600 flex items-center gap-2"
-                        >
-                          <div className="w-3 h-3 rounded border border-gray-300 flex-shrink-0" />
-                          <span>None</span>
-                        </button>
-                        <div className="border-t border-gray-100 my-1" />
-                        {projects.map((project) => (
-                          <button
-                            key={project.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleProjectSelect(project.id);
-                            }}
-                            className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors flex items-center gap-2 ${
-                              task.projectId === project.id ? 'bg-indigo-50' : ''
-                            }`}
-                          >
-                            <div
-                              className="w-3 h-3 rounded flex-shrink-0"
-                              style={{ backgroundColor: project.color }}
-                            />
-                            <span className="text-gray-700">{project.title}</span>
-                            {task.projectId === project.id && (
-                              <span className="ml-auto text-indigo-600">✓</span>
-                            )}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Linked Items Indicator */}
-                {linkedCount > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 border border-purple-200 text-xs text-purple-700">
-                    <Link2 size={11} />
-                    <span>{linkedCount}</span>
-                  </div>
-                )}
-              </div>
+            <div className={`mt-2 flex flex-wrap items-center gap-2 text-xs ${isDark ? "text-[#ddd4ff]" : "text-[#6e6597]"}`}>
+              <span className={`rounded-full border-2 px-2 py-1 font-bold uppercase ${isDark ? "border-[#fff2a8] bg-white/5" : "border-[#21185b] bg-white"}`}>
+                Added {formatWhen(task.createdAt)}
+              </span>
+              {task.completedAt ? (
+                <span className="rounded-full border-2 border-[#1f7e59] bg-[#d5ffe0] px-2 py-1 font-bold uppercase text-[#1f7e59]">
+                  Done {formatWhen(task.completedAt)}
+                </span>
+              ) : null}
+              {linkedCount > 0 ? (
+                <span className="rounded-full border-2 border-[#21185b] bg-[#fbc7ff] px-2 py-1 font-bold uppercase text-[#4d257e]">
+                  {linkedCount} linked
+                </span>
+              ) : null}
             </div>
           </div>
 
-          {/* Paper texture overlay */}
-          <div
-            className="absolute inset-0 rounded-lg pointer-events-none opacity-[0.02]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-
-          {/* Enhanced crumple animation effect */}
-          {isCompleting && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.5, 0.7, 0] }}
-                transition={{ duration: 0.7 }}
-                className="absolute inset-0 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-lg"
-                style={{
-                  mixBlendMode: "multiply",
+          <div className="flex items-center gap-1">
+            {!task.completed && onUpdateTask ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftTitle(task.title);
+                  setIsEditing(true);
                 }}
-              />
-              {/* Tear lines effect */}
-              <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: [0, 1, 1], opacity: [0, 0.8, 0] }}
-                transition={{ duration: 0.5 }}
-                className="absolute top-1/2 left-0 right-0 h-px bg-gray-600"
-                style={{ transformOrigin: "left" }}
-              />
-              <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: [0, 1, 1], opacity: [0, 0.6, 0] }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="absolute top-1/3 left-0 right-0 h-px bg-gray-500"
-                style={{ transformOrigin: "right" }}
-              />
-            </>
-          )}
+                disabled={fragment}
+                className={`rounded-md p-2 transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-white/10 hover:text-white" : "text-[#6e6597] hover:bg-white hover:text-[#181457]"}`}
+                aria-label="Edit task"
+              >
+                <Pencil size={14} />
+              </button>
+            ) : null}
+            {task.completed ? (
+              <button
+                type="button"
+                onClick={() => onToggleComplete(task.id)}
+                disabled={fragment}
+                className={`rounded-md p-2 transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-white/10 hover:text-white" : "text-[#6e6597] hover:bg-white hover:text-[#181457]"}`}
+                aria-label="Restore task"
+              >
+                <RotateCcw size={14} />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => onDelete(task.id)}
+              disabled={fragment}
+              className={`rounded-md p-2 transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-[#3c1848] hover:text-[#ff98cf]" : "text-[#6e6597] hover:bg-[#ffe0e9] hover:text-[#c82d66]"}`}
+              aria-label="Delete task"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         </div>
-      </motion.div>
-    </AnimatePresence>
+
+        {showProjectSelector && onUpdateTask ? (
+          <div className="relative mt-3">
+            <button
+              type="button"
+              onClick={() => setShowProjects((current) => !current)}
+              disabled={fragment}
+              className={`inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.05em] transition-colors ${
+                currentProject
+                  ? "border-transparent"
+                  : isDark
+                    ? "border-dashed border-[#fff2a8] text-[#ddd4ff] hover:border-[#6ff3d5] hover:text-white"
+                    : "border-dashed border-[#21185b] text-[#6e6597] hover:border-[#2347d8] hover:text-[#181457]"
+              }`}
+              style={
+                currentProject
+                  ? {
+                      backgroundColor: `${currentProject.color}20`,
+                      color: currentProject.color,
+                    }
+                  : undefined
+              }
+            >
+              <Folder size={12} />
+              <span>{currentProject ? currentProject.title : "Assign to project"}</span>
+            </button>
+
+            {!fragment && showProjects ? (
+              <div
+                className="retro-panel absolute left-0 top-full z-10 mt-2 min-w-[220px] rounded-[18px] p-2 shadow-lg"
+                style={
+                  isDark
+                    ? {
+                        backgroundImage:
+                          "linear-gradient(180deg, rgba(28,23,94,0.98), rgba(18,15,53,0.95))",
+                      }
+                    : undefined
+                }
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    onUpdateTask(task.id, { projectId: null });
+                    setShowProjects(false);
+                  }}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-white/10" : "text-[#4a4177] hover:bg-white/70"}`}
+                >
+                  <div className="h-3 w-3 rounded-full border border-slate-300" />
+                  <span>No project</span>
+                </button>
+                {projects.map((project) => (
+                  <button
+                    key={project.id}
+                    type="button"
+                    onClick={() => {
+                      onUpdateTask(task.id, { projectId: project.id });
+                      setShowProjects(false);
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-white/70 ${
+                      project.id === task.projectId
+                        ? isDark
+                          ? "bg-[#28306d] text-[#fff2a8]"
+                          : "bg-[#dbe3ff] text-[#2347d8]"
+                        : isDark
+                          ? "text-[#f7f4ff]"
+                          : "text-[#181457]"
+                    }`}
+                  >
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: project.color }}
+                    />
+                    <span>{project.title}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : currentProject ? (
+          <div
+            className={`mt-3 inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.05em] ${isDark ? "border-[#fff2a8]" : "border-[#21185b]"}`}
+            style={{
+              backgroundColor: `${currentProject.color}15`,
+              color: currentProject.color,
+            }}
+          >
+            <Folder size={12} />
+            <span>{currentProject.title}</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      className={`relative rounded-2xl border p-4 shadow-sm transition-all ${
+        task.completed
+          ? "retro-panel border-[#2d7f57] bg-[linear-gradient(180deg,_rgba(235,255,238,0.96),_rgba(201,249,221,0.92))]"
+          : "retro-panel bg-white"
+      }`}
+      style={
+        {
+          ...tearSurfaceStyle,
+          transform: isTearing ? "rotate(-1.2deg) scale(0.985)" : undefined,
+        }
+      }
+    >
+      <div
+        className={`pointer-events-none absolute inset-0 transition-opacity duration-200 ${
+          isTearing ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div
+          className="absolute inset-0 transition-opacity duration-150"
+          style={{ opacity: isTearing ? 1 : 0 }}
+        >
+          <div
+            className="absolute inset-0 rounded-2xl border-2 transition-all duration-300 ease-out"
+            style={{
+              ...tearSurfaceStyle,
+              borderColor: isDark ? "#fff2a8" : "#21185b",
+              clipPath:
+                "polygon(0 0, 100% 0, 100% 44%, 92% 48%, 84% 42%, 74% 50%, 65% 43%, 54% 51%, 44% 42%, 33% 50%, 23% 44%, 13% 49%, 0 43%)",
+              transform: isTearing ? "translate(-14px, -22px) rotate(-6deg)" : "translateY(0)",
+              boxShadow: isDark
+                ? "0 16px 24px rgba(0,0,0,0.42)"
+                : "0 16px 24px rgba(24,20,87,0.18)",
+            }}
+          >
+            <div className="absolute inset-0 px-4 py-4">
+              {renderCardContent(true)}
+            </div>
+          </div>
+        </div>
+        <div
+          className="absolute inset-0 transition-opacity duration-150"
+          style={{ opacity: isTearing ? 1 : 0 }}
+        >
+          <div
+            className="absolute inset-0 rounded-2xl border-2 transition-all duration-300 ease-out"
+            style={{
+              ...tearSurfaceStyle,
+              borderColor: isDark ? "#fff2a8" : "#21185b",
+              clipPath:
+                "polygon(0 55%, 11% 49%, 22% 57%, 33% 50%, 43% 58%, 54% 49%, 64% 57%, 74% 50%, 83% 57%, 92% 50%, 100% 55%, 100% 100%, 0 100%)",
+              transform: isTearing ? "translate(18px, 30px) rotate(7deg)" : "translateY(0)",
+              boxShadow: isDark
+                ? "0 18px 30px rgba(0,0,0,0.48)"
+                : "0 18px 30px rgba(24,20,87,0.2)",
+            }}
+          >
+            <div className="absolute inset-0 px-4 py-4">
+              {renderCardContent(true)}
+            </div>
+          </div>
+        </div>
+        <div
+          className="absolute left-[8%] top-[46%] h-[5px] w-[84%] transition-all duration-300 ease-out"
+          style={{
+            background:
+              "repeating-linear-gradient(102deg, rgba(255,255,255,0.95), rgba(255,255,255,0.95) 9px, rgba(33,24,91,0.78) 9px, rgba(33,24,91,0.78) 14px)",
+            transform: isTearing ? "rotate(-6deg) scaleX(1.03)" : "scaleX(0.88)",
+            opacity: isTearing ? 1 : 0,
+            boxShadow:
+              "0 0 0 1px rgba(255,255,255,0.3), 0 0 14px rgba(255,255,255,0.14)",
+          }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,rgba(255,255,255,0.18),transparent_24%)]" />
+      </div>
+
+      <div className={`transition-all duration-200 ${isTearing ? "scale-[0.98] opacity-0 blur-[1px]" : "opacity-100"}`}>
+        {renderCardContent()}
+      </div>
+    </div>
   );
 }

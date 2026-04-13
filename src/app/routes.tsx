@@ -1,8 +1,5 @@
 import { createBrowserRouter } from "react-router";
 import { RootLayout } from "./components/RootLayout";
-import { Dashboard } from "./components/Dashboard";
-import { ProjectDetail } from "./components/ProjectDetail";
-import { WorkspaceView } from "./components/WorkspaceView";
 
 export const router = createBrowserRouter([
   {
@@ -11,15 +8,24 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: Dashboard,
+        lazy: async () => {
+          const module = await import("./components/Dashboard");
+          return { Component: module.Dashboard };
+        },
       },
       {
         path: "project/:projectId",
-        Component: ProjectDetail,
+        lazy: async () => {
+          const module = await import("./components/ProjectDetail");
+          return { Component: module.ProjectDetail };
+        },
       },
       {
         path: "workspace",
-        Component: WorkspaceView,
+        lazy: async () => {
+          const module = await import("./components/WorkspaceView");
+          return { Component: module.WorkspaceView };
+        },
       },
     ],
   },

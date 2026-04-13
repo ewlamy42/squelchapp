@@ -1,299 +1,334 @@
-import { useState } from "react";
-import { motion } from "motion/react";
-import { ArrowLeft, Link2, Plus, MoreVertical, CheckCircle2, Circle, Edit2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Circle,
+  Link2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router";
-import { useApp } from "./AppContext";
 import { TaskCard } from "./TaskCard";
+import { useApp } from "./AppContext";
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
 
 export function ProjectDetail() {
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const { tasks, projects, updateTask, deleteTask, addTask, updateProject } = useApp();
-  const [showCompleted, setShowCompleted] = useState(false);
+  const {
+    tasks,
+    projects,
+    addTask,
+    updateTask,
+    updateProject,
+    deleteProject,
+    deleteTask,
+    toggleTaskCompletion,
+  } = useApp();
+
+  const [showCompleted, setShowCompleted] = useState(true);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
 
-  const project = projects.find((p) => p.id === projectId);
+  const project = projects.find((item) => item.id === projectId);
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Project not found</p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="mb-4 text-slate-600">Project not found.</p>
           <button
+            type="button"
             onClick={() => navigate("/")}
-            className="text-indigo-600 hover:text-indigo-700"
+            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
           >
-            Go back to dashboard
+            Back to dashboard
           </button>
         </div>
       </div>
     );
   }
 
-  const projectTasks = tasks.filter((t) => project.taskIds.includes(t.id));
-  const incompleteTasks = projectTasks.filter((t) => !t.completed);
-  const completedTasks = projectTasks.filter((t) => t.completed);
-  const completedCount = completedTasks.length;
-  const totalCount = projectTasks.length;
-  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
-
-  const linkedProjects = projects.filter((p) => project.linkedProjectIds.includes(p.id));
-
-  const handleComplete = (id: string) => {
-    updateTask(id, { completed: true });
-  };
+  const projectTasks = useMemo(
+    () => tasks.filter((task) => task.projectId === project.id),
+    [project.id, tasks]
+  );
+  const incompleteTasks = projectTasks.filter((task) => !task.completed);
+  const completedTasks = projectTasks
+    .filter((task) => task.completed)
+    .sort(
+      (left, right) =>
+        new Date(right.completedAt ?? right.createdAt).getTime() -
+        new Date(left.completedAt ?? left.createdAt).getTime()
+    );
+  const progress =
+    projectTasks.length > 0 ? (completedTasks.length / projectTasks.length) * 100 : 0;
+  const linkedProjects = projects.filter((item) => project.linkedProjectIds.includes(item.id));
 
   const handleAddTask = () => {
     addTask({
-      title: "New task",
+      title: "Untitled task",
       completed: false,
       projectId: project.id,
       linkedTaskIds: [],
     });
   };
 
-  const handleTitleClick = () => {
-    setEditedTitle(project.title);
-    setIsEditingTitle(true);
-  };
+  const handleSaveTitle = () => {
+    const nextTitle = editedTitle.trim();
 
-  const handleTitleSave = () => {
-    if (editedTitle.trim() && editedTitle !== project.title) {
-      updateProject(project.id, { title: editedTitle.trim() });
+    if (nextTitle && nextTitle !== project.title) {
+      updateProject(project.id, { title: nextTitle });
     }
+
     setIsEditingTitle(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-4 mb-4">
-            <motion.button
-              whileHover={{ x: -4 }}
-              onClick={() => navigate("/")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft size={20} className="text-gray-600" />
-            </motion.button>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: `${project.color}20` }}
-                >
-                  <div className="w-6 h-6 rounded" style={{ backgroundColor: project.color }} />
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 border-b-4 border-[#21185b] bg-[linear-gradient(90deg,_rgba(244,185,66,0.92),_rgba(111,243,213,0.9),_rgba(43,139,242,0.88))] backdrop-blur-xl">
+        <div className="mx-auto max-w-6xl px-5 py-5 sm:px-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex items-start gap-4">
+              <button
+                onClick={() => navigate("/")}
+                className="retro-button rounded-full bg-[#fff9ef] p-3 text-[#181457] shadow-sm transition hover:bg-[#fff6d5]"
+              >
+                <ArrowLeft size={18} />
+              </button>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-12 w-12 rounded-2xl"
+                    style={{ backgroundColor: `${project.color}22` }}
+                  />
+                  <div>
+                    {isEditingTitle ? (
+                      <input
+                        value={editedTitle}
+                        onChange={(event) => setEditedTitle(event.target.value)}
+                        onBlur={handleSaveTitle}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            handleSaveTitle();
+                          }
+
+                          if (event.key === "Escape") {
+                            setIsEditingTitle(false);
+                          }
+                        }}
+                        className="retro-input w-full rounded-md bg-white px-3 py-2 text-3xl font-black uppercase text-[#181457] outline-none"
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-3xl font-black uppercase tracking-[0.04em] text-[#181457]">{project.title}</h1>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditedTitle(project.title);
+                            setIsEditingTitle(true);
+                          }}
+                          className="rounded-md p-2 text-[#4a4177] transition-colors hover:bg-white/70 hover:text-[#181457]"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      </div>
+                    )}
+                    <p className="mt-1 text-sm text-[#312f67]">
+                      Created {formatShortDate(project.createdAt)}. {completedTasks.length} completed
+                      and {incompleteTasks.length} active.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  {isEditingTitle ? (
-                    <input
-                      type="text"
-                      value={editedTitle}
-                      onChange={(e) => setEditedTitle(e.target.value)}
-                      onBlur={handleTitleSave}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleTitleSave();
-                        if (e.key === "Escape") setIsEditingTitle(false);
-                      }}
-                      className="text-2xl font-bold text-gray-900 border-b-2 border-indigo-500 outline-none bg-transparent"
-                      autoFocus
+
+                <div className="mt-4 max-w-xl">
+                  <div className="h-3 overflow-hidden rounded-full border-2 border-[#21185b] bg-white">
+                    <div
+                      className="h-full rounded-full transition-[width] duration-700 ease-out"
+                      style={{ width: `${progress}%`, backgroundColor: project.color }}
                     />
-                  ) : (
-                    <div className="flex items-center gap-2 group/title">
-                      <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
-                      <button
-                        onClick={handleTitleClick}
-                        className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
-                      >
-                        <Edit2 size={16} className="text-gray-400" />
-                      </button>
-                    </div>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    {completedCount} of {totalCount} tasks completed
-                  </p>
+                  </div>
                 </div>
-              </div>
-              {/* Progress Bar */}
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: project.color }}
-                />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
                 onClick={handleAddTask}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md"
+                className="retro-button inline-flex items-center gap-2 bg-[#ffef9c] px-4 py-2.5 text-sm font-bold uppercase tracking-[0.08em] text-[#21185b] shadow-md"
               >
                 <Plus size={18} />
-                <span>Add Task</span>
-              </motion.button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <MoreVertical size={20} className="text-gray-600" />
+                <span>Add task</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteProject(project.id);
+                  navigate("/");
+                }}
+                className="retro-button inline-flex items-center gap-2 bg-[#ffd9e5] px-4 py-2.5 text-sm font-bold uppercase tracking-[0.08em] text-[#b12958] transition"
+              >
+                <Trash2 size={16} />
+                <span>Delete project</span>
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Tasks Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Active Tasks */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <main className="mx-auto grid max-w-6xl gap-8 px-5 py-8 lg:grid-cols-[1.7fr,0.9fr] sm:px-6">
+        <section className="space-y-6">
+          <div className="retro-panel rounded-[28px] p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-[0.04em] text-[#181457]">
                 <Circle size={18} style={{ color: project.color }} />
-                Active Tasks ({incompleteTasks.length})
+                <span>Active tasks</span>
+                <span className="rounded-full border-2 border-[#21185b] bg-white px-2.5 py-1 text-xs font-bold uppercase text-[#6e6597]">
+                  {incompleteTasks.length}
+                </span>
               </h2>
-              <div className="space-y-3">
-                {incompleteTasks.map((task) => (
+              <button
+                type="button"
+                onClick={handleAddTask}
+                className="retro-button rounded-full bg-white px-3 py-2 text-sm font-bold uppercase tracking-[0.08em] text-[#181457]"
+              >
+                Add another
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {incompleteTasks.length > 0 ? (
+                incompleteTasks.map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}
-                    onComplete={handleComplete}
+                    onToggleComplete={toggleTaskCompletion}
                     onDelete={deleteTask}
                     onUpdateTask={updateTask}
                     linkedCount={task.linkedTaskIds.length}
                     projects={projects}
-                    showProjectSelector={false}
                   />
-                ))}
-                {incompleteTasks.length === 0 && (
-                  <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-200">
-                    <p className="text-gray-500 mb-2">No active tasks</p>
-                    <button
-                      onClick={handleAddTask}
-                      className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-                    >
-                      Add your first task
-                    </button>
-                  </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="rounded-[18px] border-2 border-dashed border-[#21185b] bg-white/70 px-4 py-10 text-center text-sm text-[#6e6597]">
+                  No active tasks left in this project.
+                </div>
+              )}
             </div>
-
-            {/* Completed Tasks */}
-            {completedTasks.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowCompleted(!showCompleted)}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-                >
-                  <CheckCircle2 size={18} style={{ color: project.color }} />
-                  <span className="text-lg font-semibold">
-                    Completed ({completedTasks.length})
-                  </span>
-                </button>
-                {showCompleted && (
-                  <div className="space-y-3 opacity-60">
-                    {completedTasks.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onComplete={handleComplete}
-                        onDelete={deleteTask}
-                        linkedCount={task.linkedTaskIds.length}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Project Info */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-              <h3 className="font-semibold text-gray-900 mb-4">Project Details</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <p className="text-gray-500 mb-1">Status</p>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    <span className="text-gray-900">
-                      {progress === 100 ? "Completed" : "In Progress"}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Progress</p>
-                  <p className="text-gray-900 font-semibold">{Math.round(progress)}%</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Tasks</p>
-                  <p className="text-gray-900">
-                    {incompleteTasks.length} active, {completedCount} completed
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="retro-panel rounded-[28px] p-5">
+            <button
+              type="button"
+              onClick={() => setShowCompleted((current) => !current)}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-[0.04em] text-[#181457]">
+                <CheckCircle2 size={18} style={{ color: project.color }} />
+                <span>Completed tasks</span>
+                <span className="rounded-full border-2 border-[#1f7e59] bg-[#d5ffe0] px-2.5 py-1 text-xs font-bold uppercase text-[#1f7e59]">
+                  {completedTasks.length}
+                </span>
+              </h2>
+              <MoreHorizontal size={18} className="text-[#6e6597]" />
+            </button>
 
-            {/* Linked Projects */}
-            {linkedProjects.length > 0 && (
-              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <Link2 size={16} className="text-gray-600" />
-                  <h3 className="font-semibold text-gray-900">Linked Projects</h3>
+            {showCompleted ? (
+              <div className="mt-4 space-y-3">
+                {completedTasks.length > 0 ? (
+                  completedTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onToggleComplete={toggleTaskCompletion}
+                      onDelete={deleteTask}
+                      onUpdateTask={updateTask}
+                      linkedCount={task.linkedTaskIds.length}
+                      projects={projects}
+                    />
+                  ))
+                ) : (
+                  <div className="rounded-[18px] border-2 border-dashed border-[#21185b] bg-white/70 px-4 py-8 text-center text-sm text-[#6e6597]">
+                    Completed work will collect here instead of disappearing.
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </section>
+
+        <aside className="space-y-5">
+          <section className="retro-panel rounded-[28px] p-5">
+            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#6e6597]">
+              Project snapshot
+            </h3>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {[
+                { label: "Progress", value: `${Math.round(progress)}%` },
+                { label: "Total tasks", value: String(projectTasks.length) },
+                { label: "Active", value: String(incompleteTasks.length) },
+                { label: "Done", value: String(completedTasks.length) },
+              ].map((item) => (
+                <div key={item.label} className="retro-panel rounded-[18px] p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6e6597]">{item.label}</p>
+                  <p className="mt-2 text-2xl font-black text-[#181457]">{item.value}</p>
                 </div>
-                <div className="space-y-2">
-                  {linkedProjects.map((linkedProj) => (
-                    <motion.button
-                      key={linkedProj.id}
-                      whileHover={{ x: 4 }}
-                      onClick={() => navigate(`/project/${linkedProj.id}`)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+              ))}
+            </div>
+          </section>
+
+          <section className="retro-panel rounded-[28px] p-5">
+            <div className="flex items-center gap-2">
+              <Link2 size={16} className="text-[#6e6597]" />
+              <h3 className="font-black uppercase tracking-[0.04em] text-[#181457]">Linked projects</h3>
+            </div>
+            <div className="mt-4 space-y-2">
+              {linkedProjects.length > 0 ? (
+                linkedProjects.map((linkedProject) => {
+                  const linkedTaskCount = tasks.filter(
+                    (task) => task.projectId === linkedProject.id
+                  ).length;
+
+                  return (
+                    <button
+                      key={linkedProject.id}
+                      onClick={() => navigate(`/project/${linkedProject.id}`)}
+                      className="retro-panel flex w-full items-center gap-3 rounded-[18px] p-3 text-left transition duration-150 hover:translate-x-1 hover:bg-white"
                     >
                       <div
-                        className="w-8 h-8 rounded-lg flex-shrink-0"
-                        style={{ backgroundColor: `${linkedProj.color}30` }}
+                        className="h-9 w-9 rounded-xl"
+                        style={{ backgroundColor: `${linkedProject.color}26` }}
                       />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {linkedProj.title}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold uppercase text-[#181457]">
+                          {linkedProject.title}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {linkedProj.taskIds.length} tasks
-                        </p>
+                        <p className="text-xs text-[#6e6597]">{linkedTaskCount} tasks</p>
                       </div>
-                    </motion.button>
-                  ))}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="rounded-[18px] border-2 border-dashed border-[#21185b] bg-white/70 px-4 py-8 text-center text-sm text-[#6e6597]">
+                  No linked projects yet.
                 </div>
-              </div>
-            )}
-
-            {/* Quick Actions */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-100">
-              <h3 className="font-semibold text-gray-900 mb-3">Quick Actions</h3>
-              <div className="space-y-2">
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/50 transition-colors text-sm text-gray-700">
-                  Link to another project
-                </button>
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/50 transition-colors text-sm text-gray-700">
-                  Export tasks
-                </button>
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/50 transition-colors text-sm text-gray-700">
-                  Archive project
-                </button>
-              </div>
+              )}
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
+        </aside>
+      </main>
     </div>
   );
 }

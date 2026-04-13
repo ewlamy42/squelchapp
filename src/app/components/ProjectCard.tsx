@@ -1,176 +1,158 @@
-import { motion } from "motion/react";
-import { Folder, Link2, ChevronRight, Edit2 } from "lucide-react";
-import { Project, Task } from "./AppContext";
+import { useMemo, useState } from "react";
+import { ArrowUpRight, Folder, Link2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useState } from "react";
+import { type Project, type Task, useApp } from "./AppContext";
 
 interface ProjectCardProps {
   project: Project;
   tasks: Task[];
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
   onUpdateProject?: (id: string, updates: Partial<Project>) => void;
 }
 
-export function ProjectCard({ project, tasks, onDragStart, onDragEnd, onUpdateProject }: ProjectCardProps) {
+export function ProjectCard({ project, tasks, onUpdateProject }: ProjectCardProps) {
   const navigate = useNavigate();
+  const { theme } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(project.title);
-  
-  const projectTasks = tasks.filter((t) => t.id && project.taskIds.includes(t.id));
-  const completedCount = projectTasks.filter((t) => t.completed).length;
-  const totalCount = projectTasks.length;
-  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const isDark = theme === "dark";
 
+  const projectTasks = useMemo(
+    () => tasks.filter((task) => task.projectId === project.id),
+    [project.id, tasks]
+  );
+  const completedCount = projectTasks.filter((task) => task.completed).length;
+  const progress = projectTasks.length > 0 ? (completedCount / projectTasks.length) * 100 : 0;
   const recentTasks = projectTasks.slice(0, 3);
 
-  const handleTitleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(true);
-  };
+  const saveTitle = () => {
+    const nextTitle = editedTitle.trim();
 
-  const handleTitleSave = () => {
-    if (editedTitle.trim() && editedTitle !== project.title && onUpdateProject) {
-      onUpdateProject(project.id, { title: editedTitle.trim() });
-    } else {
+    if (!nextTitle) {
       setEditedTitle(project.title);
+      setIsEditing(false);
+      return;
     }
+
+    if (nextTitle !== project.title && onUpdateProject) {
+      onUpdateProject(project.id, { title: nextTitle });
+    }
+
     setIsEditing(false);
   };
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
-      }}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+    <article
       onClick={() => !isEditing && navigate(`/project/${project.id}`)}
-      className="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow border border-gray-100 cursor-pointer group relative overflow-hidden"
+      className="retro-panel group cursor-pointer overflow-hidden rounded-[26px] p-5 transition duration-150 hover:-translate-y-1 hover:shadow-lg"
       style={{
-        background: `linear-gradient(145deg, white 0%, ${project.color}08 100%)`,
+        backgroundImage: isDark
+          ? `linear-gradient(155deg, rgba(26,21,80,0.98) 0%, ${project.color}33 100%)`
+          : `linear-gradient(155deg, rgba(255,250,238,0.98) 0%, ${project.color}22 100%)`,
       }}
     >
-      {/* Ruled Lines Background - like memo paper */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute left-0 right-0 h-[1px] opacity-20"
-            style={{
-              top: `${55 + i * 28}px`,
-              backgroundColor: project.color,
-            }}
-          />
-        ))}
-        {/* Vertical margin line - positioned after icon */}
-        <div
-          className="absolute top-0 bottom-0 w-[1px] opacity-8"
-          style={{
-            left: "56px",
-            backgroundColor: project.color,
-          }}
-        />
-      </div>
-
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4 relative z-10">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${project.color}20` }}
+            className="flex h-12 w-12 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: `${project.color}18` }}
           >
-            <Folder size={20} style={{ color: project.color }} />
+            <Folder size={22} style={{ color: project.color }} />
           </div>
+
           <div>
             {isEditing ? (
               <input
-                type="text"
                 value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleTitleSave();
-                  if (e.key === "Escape") {
+                onChange={(event) => setEditedTitle(event.target.value)}
+                onBlur={saveTitle}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    saveTitle();
+                  }
+
+                  if (event.key === "Escape") {
                     setEditedTitle(project.title);
                     setIsEditing(false);
                   }
                 }}
-                onClick={(e) => e.stopPropagation()}
-                className="font-semibold text-gray-900 border-b-2 border-indigo-500 outline-none bg-transparent"
+                onClick={(event) => event.stopPropagation()}
+                className="retro-input rounded-md bg-white px-3 py-2 text-base font-black uppercase text-[#181457] outline-none"
                 autoFocus
               />
             ) : (
-              <div className="flex items-center gap-2 group/title">
-                <h3 className="font-semibold text-gray-900">{project.title}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className={`text-lg font-black uppercase tracking-[0.03em] ${isDark ? "text-white" : "text-[#181457]"}`}>{project.title}</h3>
                 <button
-                  onClick={handleTitleClick}
-                  className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setEditedTitle(project.title);
+                    setIsEditing(true);
+                  }}
+                  className={`rounded-md p-1.5 transition-colors ${isDark ? "text-[#ddd4ff] hover:bg-white/10 hover:text-white" : "text-[#6e6597] hover:bg-white/70 hover:text-[#181457]"}`}
+                  aria-label="Edit project title"
                 >
-                  <Edit2 size={14} className="text-gray-400" />
+                  <Pencil size={14} />
                 </button>
               </div>
             )}
-            <p className="text-sm text-gray-500">
-              {completedCount}/{totalCount} tasks
+            <p className={`mt-1 text-sm ${isDark ? "text-[#ddd4ff]" : "text-[#4a4177]"}`}>
+              {completedCount} of {projectTasks.length} tasks complete
             </p>
           </div>
         </div>
-        <ChevronRight
-          size={20}
-          className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+
+        <ArrowUpRight
+          size={18}
+          className={`transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${isDark ? "text-[#ddd4ff] group-hover:text-white" : "text-[#6e6597] group-hover:text-[#181457]"}`}
         />
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4 relative z-10">
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="h-full rounded-full"
-            style={{ backgroundColor: project.color }}
+      <div className="mb-5">
+        <div className="h-3 overflow-hidden rounded-full border-2 border-[#21185b] bg-white/80">
+          <div
+            className="h-full rounded-full transition-[width] duration-500 ease-out"
+            style={{ width: `${progress}%`, backgroundColor: project.color }}
           />
         </div>
       </div>
 
-      {/* Recent Tasks Preview */}
-      <div className="space-y-2 mb-3 relative z-10">
-        {recentTasks.map((task) => (
-          <div
-            key={task.id}
-            className="text-sm text-gray-600 flex items-start gap-2"
-            style={{
-              textDecoration: task.completed ? "line-through" : "none",
-              opacity: task.completed ? 0.5 : 1,
-            }}
-          >
+      <div className="space-y-2">
+        {recentTasks.length > 0 ? (
+          recentTasks.map((task) => (
             <div
-              className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-              style={{ backgroundColor: project.color }}
-            />
-            <span className="truncate">{task.title}</span>
+              key={task.id}
+              className={`flex items-start gap-2 text-sm ${
+                task.completed ? (isDark ? "text-[#a7d9c2]" : "text-[#8f88b1]") : isDark ? "text-[#f7f4ff]" : "text-[#4a4177]"
+              }`}
+            >
+              <div
+                className="mt-2 h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: project.color }}
+              />
+              <span className={`truncate ${task.completed ? "line-through" : ""}`}>
+                {task.title}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className={`rounded-[18px] border-2 border-dashed px-3 py-5 text-sm ${isDark ? "border-[#fff2a8] bg-white/5 text-[#ddd4ff]" : "border-[#21185b] bg-white/60 text-[#6e6597]"}`}>
+            No tasks in this project yet.
           </div>
-        ))}
-        {totalCount > 3 && (
-          <p className="text-xs text-gray-400 pl-3.5">+{totalCount - 3} more tasks</p>
         )}
       </div>
 
-      {/* Linked Projects */}
-      {project.linkedProjectIds.length > 0 && (
-        <div className="flex items-center gap-1 text-xs text-gray-500 pt-3 border-t border-gray-100 relative z-10">
-          <Link2 size={12} />
-          <span>{project.linkedProjectIds.length} linked project(s)</span>
-        </div>
-      )}
-    </motion.div>
+      <div className={`mt-5 flex items-center justify-between border-t-2 pt-4 text-xs ${isDark ? "border-[#fff2a8]/30 text-[#ddd4ff]" : "border-[#21185b]/20 text-[#6e6597]"}`}>
+        <span className={`rounded-full border-2 px-2.5 py-1 font-bold uppercase ${isDark ? "border-[#fff2a8] bg-white/5" : "border-[#21185b] bg-white/80"}`}>
+          Created {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(project.createdAt))}
+        </span>
+        {project.linkedProjectIds.length > 0 ? (
+          <span className={`inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-1 font-bold uppercase ${isDark ? "border-[#fff2a8] bg-white/5" : "border-[#21185b] bg-white/80"}`}>
+            <Link2 size={12} />
+            <span>{project.linkedProjectIds.length} linked</span>
+          </span>
+        ) : null}
+      </div>
+    </article>
   );
 }

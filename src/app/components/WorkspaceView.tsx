@@ -1,243 +1,186 @@
-import { useState } from "react";
-import { motion } from "motion/react";
-import { ArrowLeft, ZoomOut, Grid3x3, Maximize2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Grid3x3, ZoomOut, ZoomIn } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useApp } from "./AppContext";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function WorkspaceView() {
   const navigate = useNavigate();
-  const { tasks, projects } = useApp();
+  const { tasks, projects, theme } = useApp();
   const [zoomLevel, setZoomLevel] = useState(1);
+  const isDark = theme === "dark";
 
-  const getProjectStats = (projectId: string) => {
-    const projectTasks = tasks.filter((t) => t.projectId === projectId);
-    const completed = projectTasks.filter((t) => t.completed).length;
-    const total = projectTasks.length;
-    return { completed, total, progress: total > 0 ? (completed / total) * 100 : 0 };
-  };
+  const projectSummaries = useMemo(
+    () =>
+      projects.map((project) => {
+        const projectTasks = tasks.filter((task) => task.projectId === project.id);
+        const completed = projectTasks.filter((task) => task.completed).length;
+        const active = projectTasks.length - completed;
+        const progress = projectTasks.length > 0 ? (completed / projectTasks.length) * 100 : 0;
+
+        return {
+          project,
+          projectTasks,
+          completed,
+          active,
+          progress,
+        };
+      }),
+    [projects, tasks]
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-      {/* Top Bar */}
-      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ x: -4 }}
-                onClick={() => navigate("/")}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </motion.button>
-              <div className="flex items-center gap-2">
-                <Grid3x3 size={20} />
-                <h1 className="text-xl font-bold">Workspace Overview</h1>
+    <div className={`min-h-screen ${isDark ? "bg-[radial-gradient(circle_at_top,_rgba(146,80,255,0.28),_transparent_25%),linear-gradient(180deg,_#24156c,_#0f123b_58%,_#090a24)] text-white" : "text-slate-900"}`}>
+      <header className={`sticky top-0 z-20 ${isDark ? "border-b-4 border-[#ffef9c] bg-[linear-gradient(90deg,_rgba(24,20,87,0.96),_rgba(35,71,216,0.92),_rgba(146,80,255,0.88))]" : "border-b-4 border-[#21185b] bg-[linear-gradient(90deg,_rgba(43,139,242,0.9),_rgba(146,80,255,0.88),_rgba(239,91,127,0.86))]"} backdrop-blur-xl`}>
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/")}
+              className="retro-button rounded-full bg-[#fff9ef] p-3 text-[#181457] transition hover:bg-[#fff6d5]"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <div className={`flex items-center gap-2 ${isDark ? "text-[#fff2a8]" : "text-[#fff2a8]"}`}>
+                <Grid3x3 size={18} />
+                <span className="text-sm font-bold uppercase tracking-[0.18em]">
+                  Workspace review
+                </span>
               </div>
+              <h1 className="mt-1 text-3xl font-black uppercase tracking-[0.05em] text-white">See how projects stack together</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-slate-700 rounded-lg p-2">
-                <button
-                  onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.1))}
-                  className="p-1 hover:bg-slate-600 rounded transition-colors"
-                >
-                  <ZoomOut size={16} />
-                </button>
-                <span className="text-sm px-2">{Math.round(zoomLevel * 100)}%</span>
-                <button
-                  onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.1))}
-                  className="p-1 hover:bg-slate-600 rounded transition-colors"
-                >
-                  <Maximize2 size={16} />
-                </button>
-              </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div className="retro-button inline-flex items-center gap-2 rounded-full bg-[#fff9ef] p-2 text-[#181457]">
+            <button
+              type="button"
+              onClick={() => setZoomLevel((current) => Math.max(0.8, current - 0.1))}
+              className={`rounded-full p-2 transition ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
+            >
+              <ZoomOut size={16} />
+            </button>
+            <span className="min-w-14 text-center text-sm font-bold uppercase">
+              {Math.round(zoomLevel * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setZoomLevel((current) => Math.min(1.4, current + 0.1))}
+              className={`rounded-full p-2 transition ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
+            >
+              <ZoomIn size={16} />
+            </button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Workspace Canvas */}
-      <div className="p-8 overflow-auto">
-        <motion.div
-          animate={{ scale: zoomLevel }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="origin-top-left"
+      <main className="mx-auto max-w-7xl px-5 py-8 sm:px-6">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: "Projects", value: projects.length },
+            { label: "Tasks", value: tasks.length },
+            { label: "Completed", value: tasks.filter((task) => task.completed).length },
+            { label: "Unassigned", value: tasks.filter((task) => !task.projectId && !task.completed).length },
+          ].map((item) => (
+            <div key={item.label} className={`${isDark ? "retro-panel-dark" : "retro-panel"} rounded-[26px] p-5`}>
+              <p className={`text-xs font-bold uppercase tracking-[0.18em] ${isDark ? "text-[#fff2a8]" : "text-[#6e6597]"}`}>{item.label}</p>
+              <p className={`mt-3 text-3xl font-black ${isDark ? "text-white" : "text-[#181457]"}`}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className="origin-top-left transition-transform duration-200 ease-out"
+          style={{ transform: `scale(${zoomLevel})` }}
         >
-          {/* Stats Overview */}
-          <div className="mb-8 grid grid-cols-4 gap-4 max-w-5xl">
-            <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-              <p className="text-slate-400 text-sm mb-1">Total Projects</p>
-              <p className="text-3xl font-bold">{projects.length}</p>
-            </div>
-            <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-              <p className="text-slate-400 text-sm mb-1">Total Tasks</p>
-              <p className="text-3xl font-bold">{tasks.length}</p>
-            </div>
-            <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-              <p className="text-slate-400 text-sm mb-1">Completed</p>
-              <p className="text-3xl font-bold">{tasks.filter((t) => t.completed).length}</p>
-            </div>
-            <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-              <p className="text-slate-400 text-sm mb-1">In Progress</p>
-              <p className="text-3xl font-bold">{tasks.filter((t) => !t.completed).length}</p>
-            </div>
-          </div>
-
-          {/* Project Grid */}
-          <div className="grid grid-cols-3 gap-6 max-w-6xl">
-            {projects.map((project, index) => {
-              const stats = getProjectStats(project.id);
-              const linkedProjects = projects.filter((p) =>
-                project.linkedProjectIds.includes(p.id)
-              );
-
-              return (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, zIndex: 10 }}
-                  onClick={() => navigate(`/project/${project.id}`)}
-                  className="relative bg-slate-800 rounded-2xl p-6 border border-slate-700 hover:border-slate-500 cursor-pointer transition-all shadow-lg hover:shadow-2xl group"
-                  style={{
-                    background: `linear-gradient(135deg, #1e293b 0%, ${project.color}15 100%)`,
-                  }}
-                >
-                  {/* Project Color Indicator */}
-                  <div
-                    className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
-                    style={{ backgroundColor: project.color }}
-                  />
-
-                  {/* Header */}
-                  <div className="mb-4">
-                    <h3 className="font-bold text-lg mb-1">{project.title}</h3>
-                    <p className="text-sm text-slate-400">
-                      {stats.completed}/{stats.total} tasks
+          <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+            {projectSummaries.map(({ project, projectTasks, completed, active, progress }, index) => (
+              <article
+                key={project.id}
+                onClick={() => navigate(`/project/${project.id}`)}
+                className={`${isDark ? "retro-panel-dark hover:border-[#fff2a8]" : "retro-panel"} cursor-pointer rounded-[28px] p-6 shadow-xl transition duration-150 hover:-translate-y-1`}
+                style={{
+                  backgroundImage: isDark
+                    ? `linear-gradient(145deg, rgba(26,21,80,0.98) 0%, ${project.color}33 100%)`
+                    : `linear-gradient(145deg, rgba(255,250,238,0.98) 0%, ${project.color}22 100%)`,
+                }}
+              >
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className={`text-xl font-black uppercase tracking-[0.04em] ${isDark ? "text-white" : "text-[#181457]"}`}>{project.title}</h2>
+                    <p className={`mt-1 text-sm ${isDark ? "text-[#ddd4ff]" : "text-[#4a4177]"}`}>
+                      {active} active, {completed} completed
                     </p>
                   </div>
+                  <div
+                    className={`h-3 w-3 rounded-full ${isDark ? "border border-white" : "border border-[#21185b]"}`}
+                    style={{ backgroundColor: project.color }}
+                  />
+                </div>
 
-                  {/* Progress Ring */}
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="relative w-24 h-24">
-                      <svg className="w-24 h-24 transform -rotate-90">
-                        <circle
-                          cx="48"
-                          cy="48"
-                          r="40"
-                          stroke="currentColor"
-                          strokeWidth="6"
-                          fill="none"
-                          className="text-slate-700"
-                        />
-                        <motion.circle
-                          cx="48"
-                          cy="48"
-                          r="40"
-                          stroke={project.color}
-                          strokeWidth="6"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 40}`}
-                          initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
-                          animate={{
-                            strokeDashoffset:
-                              2 * Math.PI * 40 - (stats.progress / 100) * 2 * Math.PI * 40,
-                          }}
-                          transition={{ duration: 1, ease: "easeOut" }}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-2xl font-bold">{Math.round(stats.progress)}%</span>
-                      </div>
-                    </div>
+                <div className="mb-5">
+                  <div className={`h-3 overflow-hidden rounded-full border-2 ${isDark ? "border-[#fff2a8] bg-[#0f123b]" : "border-[#21185b] bg-white"}`}>
+                    <div
+                      className="h-full rounded-full transition-[width] duration-700 ease-out"
+                      style={{ width: `${progress}%`, backgroundColor: project.color }}
+                    />
                   </div>
-
-                  {/* Task Preview */}
-                  <div className="space-y-2 mb-4">
-                    {tasks
-                      .filter((t) => project.taskIds.includes(t.id))
-                      .slice(0, 3)
-                      .map((task) => (
-                        <div
-                          key={task.id}
-                          className="text-xs text-slate-300 flex items-center gap-2"
-                          style={{
-                            textDecoration: task.completed ? "line-through" : "none",
-                            opacity: task.completed ? 0.5 : 1,
-                          }}
-                        >
-                          <div
-                            className="w-1 h-1 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: project.color }}
-                          />
-                          <span className="truncate">{task.title}</span>
-                        </div>
-                      ))}
+                  <div className={`mt-2 flex items-center justify-between text-xs font-bold uppercase tracking-[0.08em] ${isDark ? "text-[#ddd4ff]" : "text-[#6e6597]"}`}>
+                    <span>{projectTasks.length} total tasks</span>
+                    <span>{Math.round(progress)}% complete</span>
                   </div>
+                </div>
 
-                  {/* Linked Projects */}
-                  {linkedProjects.length > 0 && (
-                    <div className="pt-4 border-t border-slate-700">
-                      <p className="text-xs text-slate-400 mb-2">Connected to:</p>
-                      <div className="flex gap-2">
-                        {linkedProjects.map((linked) => (
-                          <div
-                            key={linked.id}
-                            className="w-6 h-6 rounded flex-shrink-0"
-                            style={{ backgroundColor: `${linked.color}40` }}
-                            title={linked.title}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Connection Lines (visual effect) */}
-                  {linkedProjects.length > 0 && (
-                    <svg
-                      className="absolute top-1/2 left-full w-12 h-1 pointer-events-none opacity-0 group-hover:opacity-50 transition-opacity"
-                      style={{ transform: "translateY(-50%)" }}
+                <div className="space-y-2">
+                  {projectTasks.slice(0, 4).map((task) => (
+                    <div
+                      key={task.id}
+                      className={`rounded-2xl px-3 py-2 text-sm ${
+                        task.completed
+                          ? isDark
+                            ? "border border-[#7ef0b7] bg-[#0d6c52]/35 text-[#d8ffea]"
+                            : "border border-[#2d7f57] bg-[#d5ffe0] text-[#1f7e59]"
+                          : isDark
+                            ? "border border-[#5f55c9] bg-[#12184f]/80 text-[#f7f4ff]"
+                            : "border border-[#21185b] bg-white/75 text-[#181457]"
+                      }`}
                     >
-                      <line
-                        x1="0"
-                        y1="2"
-                        x2="48"
-                        y2="2"
-                        stroke={project.color}
-                        strokeWidth="2"
-                        strokeDasharray="4 4"
-                      />
-                    </svg>
-                  )}
-                </motion.div>
-              );
-            })}
+                      <span className={task.completed ? "line-through" : ""}>{task.title}</span>
+                    </div>
+                  ))}
+                  {projectTasks.length === 0 ? (
+                    <div className={`rounded-[18px] border-2 border-dashed px-3 py-6 text-center text-sm ${isDark ? "border-[#fff2a8] text-[#ddd4ff]" : "border-[#21185b] text-[#6e6597]"}`}>
+                      No tasks yet.
+                    </div>
+                  ) : null}
+                </div>
+              </article>
+            ))}
           </div>
+        </div>
 
-          {/* Unassigned Tasks Section */}
-          <div className="mt-8 max-w-6xl">
-            <h2 className="text-xl font-bold mb-4">Unassigned Tasks</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {tasks
-                .filter((t) => !t.projectId && !t.completed)
-                .slice(0, 8)
-                .map((task, index) => (
-                  <motion.div
-                    key={task.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
-                    className="bg-slate-800 rounded-lg p-3 border border-slate-700 hover:border-slate-500 transition-colors"
-                  >
-                    <p className="text-sm text-slate-300 truncate">{task.title}</p>
-                  </motion.div>
-                ))}
-            </div>
+        <section className={`${isDark ? "retro-panel-dark" : "retro-panel"} mt-10 rounded-[28px] p-6`}>
+          <h2 className={`text-xl font-black uppercase tracking-[0.04em] ${isDark ? "text-white" : "text-[#181457]"}`}>Unassigned tasks</h2>
+          <p className={`mt-1 text-sm ${isDark ? "text-[#ddd4ff]" : "text-[#4a4177]"}`}>
+            Tasks without a project stay visible here so nothing falls out of the system.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {tasks
+              .filter((task) => !task.projectId && !task.completed)
+              .slice(0, 8)
+              .map((task) => (
+                <div
+                  key={task.id}
+                  className={`rounded-[18px] border-2 px-4 py-3 text-sm ${isDark ? "border-[#5f55c9] bg-[#101445] text-[#f7f4ff]" : "border-[#21185b] bg-white/75 text-[#181457]"}`}
+                >
+                  {task.title}
+                </div>
+              ))}
           </div>
-        </motion.div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
