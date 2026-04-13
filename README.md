@@ -9,15 +9,12 @@ This repo is prepared for a consistent Mac and Windows setup.
 
 Each student should use their own Vercel account. Do not share a single class login.
 
-Preferred option:
+Use:
 
-- install [Volta](https://volta.sh/) and open the repo
-- Volta will use the pinned Node and npm versions from `package.json`
+- Node.js `22.x` or `24.x`
+- npm `10.x` or `11.x`
 
-Alternative option:
-
-- use a Node version manager that supports `.nvmrc`
-- install and use Node `22.14.0`
+If you already use a version manager like `nvm`, `.nvmrc` is included as an optional convenience file, but it is not required for this workflow.
 
 Then run:
 

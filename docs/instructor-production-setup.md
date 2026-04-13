@@ -12,7 +12,6 @@ Set up one shared production deployment and one shared preview workflow so stude
 - `Vercel`: the shared hosting platform for preview and production deployments
 - `Vercel CLI`: the local command-line bridge between a student checkout and the shared Vercel project
 - `Node.js` and `npm`: the runtime and package manager used to install dependencies, build the app, and run local scripts
-- `Volta`: the cross-platform version manager used to keep Node.js and npm consistent for the class on both Mac and Windows
 
 ## 1. Prepare GitHub
 

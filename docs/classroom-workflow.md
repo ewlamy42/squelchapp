@@ -32,7 +32,7 @@ Why this fits the class well:
 ## Team Workflow
 
 1. Clone the repository.
-2. Install the pinned Node/npm toolchain with Volta or use the version in `.nvmrc`.
+2. Install Node.js and npm locally.
 3. Create a branch for your work.
 4. Run the app locally with `npm run dev`.
 5. Push your branch to GitHub.
@@ -63,12 +63,12 @@ Recommended project settings:
 
 ## Local Environment Standard
 
-This repository pins Node and npm through Volta in `package.json` and also includes `.nvmrc`.
+This repository is designed to work with:
 
-That gives the class two good setup paths:
+- Node.js `22.x` or `24.x`
+- npm `10.x` or `11.x`
 
-- Volta for the easiest cross-platform setup on Windows and Mac
-- `.nvmrc` for people already using `nvm`
+`.nvmrc` is included as an optional convenience file for people who already use `nvm`, but it is not required for the class workflow.
 
 Quick checklists:
 

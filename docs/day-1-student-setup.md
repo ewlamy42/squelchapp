@@ -17,7 +17,6 @@ Use this checklist the first time you set up `squelchapp` on your machine.
 - `Vercel CLI`: connects your local repo to the shared Vercel project and lets you deploy from your machine or through this assistant
 - `Node.js`: runs the JavaScript tooling used to build and serve the app locally
 - `npm`: installs project dependencies and runs the repo scripts like `npm run dev` and `npm run build`
-- `Volta`: keeps the Node.js and npm versions consistent across Mac and Windows machines so everyone uses the same toolchain
 
 ## Create Your Vercel Account
 
@@ -38,14 +37,14 @@ If you cannot see the project, ask the instructor to verify your team membership
 
 ## Install The Tooling
 
-Recommended:
+Install:
 
-- install [Volta](https://volta.sh/)
+- Node.js `22.x` or `24.x`
+- npm `10.x` or `11.x`
 
-Alternative:
+Optional:
 
-- install a Node version manager that supports `.nvmrc`
-- use Node `22.14.0`
+- if you already use a Node version manager such as `nvm`, this repo includes `.nvmrc`
 
 ## Clone And Install
 
@@ -161,4 +160,24 @@ If Vercel settings changed, rerun:
 
 ```bash
 npm run vercel:pull:preview
+```
+
+If `npm ci` says there is no `package-lock.json`, your local clone is probably behind the latest `main` branch. Run:
+
+```bash
+git checkout main
+git pull
+```
+
+Then confirm the file exists and retry:
+
+```bash
+dir package-lock.json
+npm ci
+```
+
+On macOS or Linux, you can check for the file with:
+
+```bash
+ls package-lock.json
 ```
