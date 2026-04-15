@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ArrowUpRight, Folder, Link2, Pencil } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { ArrowUpRight, Folder, GripVertical, Link2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
 import { type Project, type Task, useApp } from "./AppContext";
 
@@ -7,9 +7,21 @@ interface ProjectCardProps {
   project: Project;
   tasks: Task[];
   onUpdateProject?: (id: string, updates: Partial<Project>) => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent<HTMLElement>, id: string) => void;
+  onDragOver?: (e: React.DragEvent<HTMLElement>, id: string) => void;
+  onDrop?: (e: React.DragEvent<HTMLElement>, id: string) => void;
 }
 
-export function ProjectCard({ project, tasks, onUpdateProject }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  tasks,
+  onUpdateProject,
+  draggable = false,
+  onDragStart,
+  onDragOver,
+  onDrop,
+}: ProjectCardProps) {
   const navigate = useNavigate();
   const { theme } = useApp();
   const [isEditing, setIsEditing] = useState(false);
@@ -42,6 +54,10 @@ export function ProjectCard({ project, tasks, onUpdateProject }: ProjectCardProp
 
   return (
     <article
+      draggable={draggable}
+      onDragStart={draggable ? (e) => onDragStart?.(e, project.id) : undefined}
+      onDragOver={draggable ? (e) => onDragOver?.(e, project.id) : undefined}
+      onDrop={draggable ? (e) => onDrop?.(e, project.id) : undefined}
       onClick={() => !isEditing && navigate(`/project/${project.id}`)}
       className="retro-panel group cursor-pointer overflow-hidden rounded-[26px] p-5 transition duration-150 hover:-translate-y-1 hover:shadow-lg"
       style={{
@@ -51,6 +67,14 @@ export function ProjectCard({ project, tasks, onUpdateProject }: ProjectCardProp
       }}
     >
       <div className="mb-5 flex items-start justify-between gap-4">
+        {draggable && (
+          <div
+            className={`mt-1 cursor-grab active:cursor-grabbing ${isDark ? "text-[#ddd4ff]" : "text-[#6e6597]"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical size={18} />
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <div
             className="flex h-12 w-12 items-center justify-center rounded-2xl"
