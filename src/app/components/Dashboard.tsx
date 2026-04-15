@@ -309,7 +309,7 @@ export function Dashboard() {
                   }
                 }}
                 placeholder="Name a new project"
-                className="retro-input w-full bg-transparent px-4 py-3 text-sm text-[#181457] outline-none"
+                className={`retro-input w-full bg-transparent px-4 py-3 text-sm outline-none ${isDark ? "text-white" : "text-[#181457]"}`}
                 autoFocus
               />
             </div>
