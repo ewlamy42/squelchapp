@@ -9,3 +9,6 @@ dist
 # Added by Peter Ungaro for Claude/Superowers development
 .claude
 docs/superpowers
+
+# Added by Peter Ungaro for testing direct Github access
+.gemini
