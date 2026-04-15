@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { type Project, type Task, useApp } from "./AppContext";
 import { TaskCard } from "./TaskCard";
@@ -14,6 +14,8 @@ interface TaskPanelProps {
   onDelete: (id: string) => void;
   onUpdateTask?: (id: string, updates: Partial<Task>) => void;
   projects?: Project[];
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 export function TaskPanel({
@@ -27,10 +29,13 @@ export function TaskPanel({
   onDelete,
   onUpdateTask,
   projects = [],
+  collapsible = false,
+  defaultCollapsed = false,
 }: TaskPanelProps) {
   const { theme } = useApp();
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const isDark = theme === "dark";
 
   const handleAddTask = () => {
@@ -51,18 +56,24 @@ export function TaskPanel({
       className="retro-panel retro-grid rounded-[26px] p-5"
     >
       <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-1.5 rounded-full border border-[#21185b]" style={{ backgroundColor: color }} />
-            <h2 className={`text-lg font-black uppercase tracking-[0.04em] ${isDark ? "text-white" : "text-[#181457]"}`}>{title}</h2>
-            <span className={`rounded-full border-2 px-2.5 py-1 text-xs font-bold uppercase ${isDark ? "border-[#fff2a8] bg-white/5 text-[#ddd4ff]" : "border-[#21185b] bg-white text-[#6e6597]"}`}>
-              {tasks.length}
-            </span>
-          </div>
-          {description ? <p className={`mt-2 text-sm ${isDark ? "text-[#ddd4ff]" : "text-[#4a4177]"}`}>{description}</p> : null}
+        <div
+          className={`flex items-center gap-2 ${collapsible ? "cursor-pointer select-none" : ""}`}
+          onClick={collapsible ? () => setCollapsed((c) => !c) : undefined}
+        >
+          {collapsible ? (
+            collapsed
+              ? <ChevronRight size={18} className={isDark ? "text-[#ddd4ff]" : "text-[#6e6597]"} />
+              : <ChevronDown size={18} className={isDark ? "text-[#ddd4ff]" : "text-[#6e6597]"} />
+          ) : null}
+          <div className="h-7 w-1.5 rounded-full border border-[#21185b]" style={{ backgroundColor: color }} />
+          <h2 className={`text-lg font-black uppercase tracking-[0.04em] ${isDark ? "text-white" : "text-[#181457]"}`}>{title}</h2>
+          <span className={`rounded-full border-2 px-2.5 py-1 text-xs font-bold uppercase ${isDark ? "border-[#fff2a8] bg-white/5 text-[#ddd4ff]" : "border-[#21185b] bg-white text-[#6e6597]"}`}>
+            {tasks.length}
+          </span>
         </div>
+        {description && !collapsed ? <p className={`mt-2 text-sm ${isDark ? "text-[#ddd4ff]" : "text-[#4a4177]"}`}>{description}</p> : null}
 
-        {onAddTask ? (
+        {onAddTask && !collapsed ? (
           <button
             type="button"
             onClick={() => setIsAdding(true)}
@@ -74,7 +85,7 @@ export function TaskPanel({
         ) : null}
       </div>
 
-      <div className="space-y-3">
+      <div className={`space-y-3 ${collapsed ? "hidden" : ""}`}>
         {tasks.length > 0 ? (
           tasks.map((task) => (
             <TaskCard

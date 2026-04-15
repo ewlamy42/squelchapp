@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Folder, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { CalendarClock, Check, Folder, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { type Project, type Task, useApp } from "./AppContext";
 
 interface TaskCardProps {
@@ -214,6 +214,26 @@ export function TaskCard({
                   Done {formatWhen(task.completedAt)}
                 </span>
               ) : null}
+              {task.dueDate ? (() => {
+                const now = new Date();
+                const due = new Date(task.dueDate);
+                const isOverdue = !task.completed && due < now && due.toDateString() !== now.toDateString();
+                const isDueToday = due.toDateString() === now.toDateString();
+                return (
+                  <span className={`inline-flex items-center gap-1 rounded-full border-2 px-2 py-1 font-bold uppercase ${
+                    isOverdue
+                      ? "border-[#dc2626] bg-[#fee2e2] text-[#dc2626]"
+                      : isDueToday
+                        ? "border-[#d97706] bg-[#fef3c7] text-[#d97706]"
+                        : isDark
+                          ? "border-[#fff2a8] bg-white/5 text-[#ddd4ff]"
+                          : "border-[#21185b] bg-white text-[#6e6597]"
+                  }`}>
+                    <CalendarClock size={10} />
+                    {isOverdue ? "Overdue" : isDueToday ? "Due today" : `Due ${formatWhen(task.dueDate)}`}
+                  </span>
+                );
+              })() : null}
               {linkedCount > 0 ? (
                 <span className="rounded-full border-2 border-[#21185b] bg-[#fbc7ff] px-2 py-1 font-bold uppercase text-[#4d257e]">
                   {linkedCount} linked

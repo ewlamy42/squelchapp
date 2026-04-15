@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FolderPlus, Layout, Plus, RotateCcw, Search } from "lucide-react";
+import { CalendarClock, FolderPlus, Layout, Plus, RotateCcw, Search } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ProjectCard } from "./ProjectCard";
 import { TaskPanel } from "./TaskPanel";
@@ -19,6 +19,36 @@ const projectPalette = ["#4F46E5", "#EC4899", "#10B981", "#F59E0B", "#0EA5E9", "
 function isSameDay(left: string, right: Date) {
   const date = new Date(left);
   return date.toDateString() === right.toDateString();
+}
+
+function isDueOnDay(dueDate: string | undefined, day: Date) {
+  if (!dueDate) return false;
+  return new Date(dueDate).toDateString() === day.toDateString();
+}
+
+function isDueThisWeek(dueDate: string | undefined, today: Date) {
+  if (!dueDate) return false;
+  const due = new Date(dueDate);
+  const dayOfWeek = today.getDay();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - dayOfWeek);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
+  return due >= startOfWeek && due < endOfWeek;
+}
+
+function isDueThisMonth(dueDate: string | undefined, today: Date) {
+  if (!dueDate) return false;
+  const due = new Date(dueDate);
+  return due.getMonth() === today.getMonth() && due.getFullYear() === today.getFullYear();
+}
+
+function isOverdue(dueDate: string | undefined, today: Date) {
+  if (!dueDate) return false;
+  const due = new Date(dueDate);
+  due.setHours(23, 59, 59, 999);
+  return due < today;
 }
 
 export function Dashboard() {
@@ -45,6 +75,7 @@ export function Dashboard() {
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [quickCaptureTitle, setQuickCaptureTitle] = useState("");
   const [quickCaptureProjectId, setQuickCaptureProjectId] = useState<string | null>(null);
+  const [quickCaptureDueDate, setQuickCaptureDueDate] = useState("");
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const today = new Date();
@@ -94,6 +125,19 @@ export function Dashboard() {
     taskCount: tasks.filter((task) => task.projectId === project.id).length,
   }));
 
+  const overdueTasks = filteredTasks.filter(
+    (task) => !task.completed && isOverdue(task.dueDate, today) && !isDueOnDay(task.dueDate, today)
+  );
+  const dueTodayTasks = filteredTasks.filter(
+    (task) => !task.completed && isDueOnDay(task.dueDate, today)
+  );
+  const dueThisWeekTasks = filteredTasks.filter(
+    (task) => !task.completed && isDueThisWeek(task.dueDate, today) && !isDueOnDay(task.dueDate, today) && !isOverdue(task.dueDate, today)
+  );
+  const dueThisMonthTasks = filteredTasks.filter(
+    (task) => !task.completed && isDueThisMonth(task.dueDate, today) && !isDueThisWeek(task.dueDate, today) && !isOverdue(task.dueDate, today)
+  );
+
   const focusCount = filteredTasks.filter((task) => !task.completed).length;
 
   const handleAddInboxTask = (title: string) => {
@@ -117,10 +161,12 @@ export function Dashboard() {
       completed: false,
       projectId: quickCaptureProjectId,
       linkedTaskIds: [],
+      ...(quickCaptureDueDate ? { dueDate: new Date(quickCaptureDueDate + "T17:00:00").toISOString() } : {}),
     });
 
     setQuickCaptureTitle("");
     setQuickCaptureProjectId(null);
+    setQuickCaptureDueDate("");
     setIsQuickCaptureOpen(false);
   };
 
@@ -231,7 +277,8 @@ export function Dashboard() {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
                   { label: "Inbox", value: inboxTasks.length },
-                  { label: "Today", value: todayTasks.length },
+                  { label: "Due today", value: dueTodayTasks.length },
+                  { label: "Overdue", value: overdueTasks.length },
                   { label: "Projects", value: projects.length },
                   { label: "Done", value: tasks.filter((task) => task.completed).length },
                 ].map((item) => (
@@ -340,6 +387,66 @@ export function Dashboard() {
           </div>
         </section>
 
+        <section className="mt-8">
+          <div className="mb-4 flex items-center gap-3">
+            <CalendarClock size={22} className={isDark ? "text-[#fff2a8]" : "text-[#2347d8]"} />
+            <div>
+              <p className={`text-sm font-bold uppercase tracking-[0.18em] ${isDark ? "text-[#fff2a8]" : "text-[#6e6597]"}`}>Deadlines</p>
+              <h2 className={`text-2xl font-black uppercase ${isDark ? "text-white" : "text-[#181457]"}`}>What's due and when</h2>
+            </div>
+          </div>
+          <div className="grid gap-5 xl:grid-cols-[1fr,1fr,1fr,1fr]">
+            {overdueTasks.length > 0 ? (
+              <TaskPanel
+                title="Overdue"
+                tasks={overdueTasks}
+                emptyLabel="Nothing overdue."
+                color="#ef4444"
+                collapsible
+                onToggleComplete={toggleTaskCompletion}
+                onDelete={deleteTask}
+                onUpdateTask={updateTask}
+                projects={projects}
+              />
+            ) : null}
+            <TaskPanel
+              title="Due today"
+              tasks={dueTodayTasks}
+              emptyLabel="Nothing due today."
+              color="#f59e0b"
+              collapsible
+              onToggleComplete={toggleTaskCompletion}
+              onDelete={deleteTask}
+              onUpdateTask={updateTask}
+              projects={projects}
+            />
+            <TaskPanel
+              title="Due this week"
+              tasks={dueThisWeekTasks}
+              emptyLabel="Nothing else due this week."
+              color="#3b82f6"
+              collapsible
+              defaultCollapsed
+              onToggleComplete={toggleTaskCompletion}
+              onDelete={deleteTask}
+              onUpdateTask={updateTask}
+              projects={projects}
+            />
+            <TaskPanel
+              title="Due this month"
+              tasks={dueThisMonthTasks}
+              emptyLabel="Nothing else due this month."
+              color="#8b5cf6"
+              collapsible
+              defaultCollapsed
+              onToggleComplete={toggleTaskCompletion}
+              onDelete={deleteTask}
+              onUpdateTask={updateTask}
+              projects={projects}
+            />
+          </div>
+        </section>
+
         <section className="mt-10 grid gap-5 xl:grid-cols-[1fr,1fr,1fr]">
           <TaskPanel
             title="Inbox"
@@ -389,6 +496,7 @@ export function Dashboard() {
           if (!open) {
             setQuickCaptureTitle("");
             setQuickCaptureProjectId(null);
+            setQuickCaptureDueDate("");
           }
         }}
       >
@@ -451,6 +559,22 @@ export function Dashboard() {
               </select>
             </div>
 
+            <div>
+              <label
+                htmlFor="quick-capture-due-date"
+                className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-[#6e6597]"
+              >
+                Due date
+              </label>
+              <input
+                id="quick-capture-due-date"
+                type="date"
+                value={quickCaptureDueDate}
+                onChange={(event) => setQuickCaptureDueDate(event.target.value)}
+                className="retro-input w-full px-4 py-3 text-sm text-[#181457] outline-none"
+              />
+            </div>
+
             <div className="rounded-[18px] border-2 border-dashed border-[#21185b] bg-white/70 p-4 text-sm text-[#4a4177]">
               Tasks without a project land in Inbox. If you pick a project here, the task will go
               there immediately.
@@ -464,6 +588,7 @@ export function Dashboard() {
                 setIsQuickCaptureOpen(false);
                 setQuickCaptureTitle("");
                 setQuickCaptureProjectId(null);
+                setQuickCaptureDueDate("");
               }}
               className="retro-button bg-white px-4 py-2.5 text-sm font-bold uppercase tracking-[0.08em] text-[#181457]"
             >
