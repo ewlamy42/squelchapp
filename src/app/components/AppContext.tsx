@@ -41,6 +41,7 @@ interface AppContextType {
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   resetDemoData: () => void;
+  reorderProjects: (fromId: string, toId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -346,6 +347,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       resetDemoData: () => {
         setState(buildInitialState());
+      },
+      reorderProjects: (fromId, toId) => {
+        setState((current) => {
+          const next = [...current.projects];
+          const fromIndex = next.findIndex((p) => p.id === fromId);
+          const toIndex = next.findIndex((p) => p.id === toId);
+          if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+            return current;
+          }
+          const [removed] = next.splice(fromIndex, 1);
+          next.splice(toIndex, 0, removed);
+          return { ...current, projects: next };
+        });
       },
     }),
     [state, theme]
