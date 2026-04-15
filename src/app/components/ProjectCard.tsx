@@ -8,8 +8,10 @@ interface ProjectCardProps {
   tasks: Task[];
   onUpdateProject?: (id: string, updates: Partial<Project>) => void;
   draggable?: boolean;
+  isDragging?: boolean;
+  isDropTarget?: boolean;
   onDragStart?: (e: React.DragEvent<HTMLElement>, id: string) => void;
-  onDragOver?: (e: React.DragEvent<HTMLElement>) => void;
+  onDragOver?: (e: React.DragEvent<HTMLElement>, id: string) => void;
   onDrop?: (e: React.DragEvent<HTMLElement>, id: string) => void;
   onDragEnd?: (e: React.DragEvent<HTMLElement>) => void;
 }
@@ -19,6 +21,8 @@ export function ProjectCard({
   tasks,
   onUpdateProject,
   draggable = false,
+  isDragging = false,
+  isDropTarget = false,
   onDragStart,
   onDragOver,
   onDrop,
@@ -56,11 +60,11 @@ export function ProjectCard({
 
   return (
     <article
-      onDragOver={draggable ? (e) => onDragOver?.(e) : undefined}
+      onDragOver={draggable ? (e) => onDragOver?.(e, project.id) : undefined}
       onDrop={draggable ? (e) => onDrop?.(e, project.id) : undefined}
       onDragEnd={draggable ? (e) => onDragEnd?.(e) : undefined}
       onClick={() => !isEditing && navigate(`/project/${project.id}`)}
-      className="retro-panel group cursor-pointer overflow-hidden rounded-[26px] p-5 transition duration-150 hover:-translate-y-1 hover:shadow-lg"
+      className={`retro-panel group cursor-pointer overflow-hidden rounded-[26px] p-5 transition duration-150 hover:-translate-y-1 hover:shadow-lg${isDragging ? " opacity-40 scale-[0.98]" : ""}${isDropTarget ? " ring-4 ring-[#9250ff] ring-offset-2 scale-[1.02]" : ""}`}
       style={{
         backgroundImage: isDark
           ? `linear-gradient(155deg, rgba(26,21,80,0.98) 0%, ${project.color}33 100%)`
@@ -71,7 +75,12 @@ export function ProjectCard({
         {draggable && (
           <div
             draggable
-            onDragStart={(e) => { e.stopPropagation(); onDragStart?.(e, project.id); }}
+            onDragStart={(e) => {
+              const card = e.currentTarget.closest('article');
+              if (card) e.dataTransfer.setDragImage(card, 20, 20);
+              e.stopPropagation();
+              onDragStart?.(e, project.id);
+            }}
             className={`mt-1 cursor-grab active:cursor-grabbing ${isDark ? "text-[#ddd4ff]" : "text-[#6e6597]"}`}
             onClick={(e) => e.stopPropagation()}
           >

@@ -39,6 +39,7 @@ export function Dashboard() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState("");
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
@@ -127,8 +128,9 @@ export function Dashboard() {
     setDraggedId(id);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
+    setDragOverId(id);
   };
 
   const handleDrop = (_e: React.DragEvent, targetId: string) => {
@@ -136,10 +138,12 @@ export function Dashboard() {
       reorderProjects(draggedId, targetId);
     }
     setDraggedId(null);
+    setDragOverId(null);
   };
 
   const handleDragEnd = (_e: React.DragEvent) => {
     setDraggedId(null);
+    setDragOverId(null);
   };
 
   const handleAddProject = () => {
@@ -320,6 +324,8 @@ export function Dashboard() {
                   tasks={tasks}
                   onUpdateProject={updateProject}
                   draggable={normalizedQuery === ""}
+                  isDragging={draggedId === project.id}
+                  isDropTarget={dragOverId === project.id && dragOverId !== draggedId}
                   onDragStart={handleDragStart}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
